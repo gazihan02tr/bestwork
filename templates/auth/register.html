@@ -1,144 +1,264 @@
 {% extends "inc/base.html" %}
 {% block title %}Kayıt Ol{% endblock %}
 {% block content %}
-<section class="py-12">
-    <div class="max-w-lg mx-auto bg-surface rounded-2xl elevation-2 px-8 py-10">
-        <h1 class="text-2xl font-semibold text-on-background mb-6 text-center">Bestwork Ailesine Katılın</h1>
-
-        <form method="post" class="space-y-5">
-            {% if sponsor_info %}
-            <div class="px-4 py-3 rounded-xl border border-error/50 bg-error/10 text-error text-sm font-semibold">
-                Sponsor: {{ sponsor_info.name }}
-            </div>
-            {% endif %}
-            <div>
-                <label for="name" class="block text-sm font-medium text-on-surface mb-1">Ad Soyad</label>
-                <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value="{{ name or '' }}"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                    placeholder="Adınız ve soyadınız"
-                >
+<section class="py-16 bg-gradient-to-br from-surface via-surface-variant/40 to-surface">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="bg-white rounded-3xl shadow-[0_35px_60px_-15px_rgba(124,58,237,0.35)] border border-outline-variant/60 overflow-hidden">
+            <div class="px-8 py-8 bg-gradient-to-r from-primary/15 via-primary/10 to-secondary/15 border-b border-outline-variant/50">
+                <p class="text-xs uppercase tracking-[0.35em] text-primary font-semibold mb-3">Bestwork Network</p>
+                <h1 class="text-3xl font-semibold text-on-background leading-snug">Yeni Üyelik Başvurusu</h1>
+                <p class="text-on-surface-variant mt-2 text-sm leading-relaxed">
+                    Lütfen bilgilerinizi eksiksiz ve doğru şekilde giriniz. Kimlik doğrulaması, iletişim bilgileri ve sözleşme onayları zorunludur.
+                </p>
             </div>
 
-            <div>
-                <label for="email" class="block text-sm font-medium text-on-surface mb-1">E-posta</label>
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value="{{ email or '' }}"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                    placeholder="ornek@mail.com"
-                >
-            </div>
+            <form method="post" class="px-8 py-10 space-y-10">
+                {% set input_classes = "w-full rounded-xl border border-outline-variant/60 bg-white px-4 py-3 text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/70 focus:border-transparent transition" %}
+                {% if sponsor_info %}
+                <div class="px-6 py-4 rounded-2xl bg-secondary/12 border border-secondary/30 flex flex-col gap-2 text-on-surface sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-lg font-semibold">
+                            {{ sponsor_info.name[:2].upper() }}
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-on-surface-variant">Sponsor Üyeniz</p>
+                            <p class="text-base font-semibold">{{ sponsor_info.name }}</p>
+                        </div>
+                    </div>
+                    {% if sponsor_code %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-on-secondary text-xs font-semibold uppercase tracking-wide">
+                        Kod: {{ sponsor_code }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
 
-            <div>
-                <label for="phone" class="block text-sm font-medium text-on-surface mb-1">Telefon Numarası</label>
-                <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    value="{{ phone or '' }}"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                    placeholder="Örn. +905551112233"
-                >
-            </div>
-
-            <div>
-                <label for="identity_number" class="block text-sm font-medium text-on-surface mb-1">T.C. Kimlik Numarası</label>
-                <input
-                    id="identity_number"
-                    name="identity_number"
-                    type="text"
-                    required
-                    value="{{ identity_number or '' }}"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                    placeholder="11 haneli T.C. Kimlik numaranız"
-                >
-            </div>
-
-            <div>
-                <label for="country_code" class="block text-sm font-medium text-on-surface mb-1">Ülke</label>
-                <select
-                    id="country_code"
-                    name="country_code"
-                    required
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                >
-                    {% for country in countries %}
-                        <option value="{{ country.dial_code }}" {% if selected_country == country.dial_code %}selected{% endif %}>
-                            {{ country.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            {% if requires_referral %}
-            <div>
-                <label for="sponsor_code" class="block text-sm font-medium text-on-surface mb-1">Referans Kodu</label>
-                <input
-                    id="sponsor_code"
-                    name="sponsor_code"
-                    type="text"
-                    minlength="3"
-                    required
-                    value="{{ sponsor_code or '' }}"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface uppercase tracking-wide"
-                    placeholder="Örn. TR12345678"
-                >
-                <p class="text-xs text-on-surface-variant mt-1">Sizi davet eden üyeden aldığınız kodu girin.</p>
-            </div>
-            {% else %}
-            <div class="px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container text-sm">
-                İlk lider hesabı oluşturuluyor. Referans kodu gerekmiyor.
-            </div>
-            {% endif %}
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="password" class="block text-sm font-medium text-on-surface mb-1">Şifre</label>
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        minlength="6"
-                        class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                        placeholder="En az 6 karakter"
-                    >
+                <div class="space-y-6">
+                    <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">badge</span>
+                        Kişisel Bilgiler
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="first_name" class="block text-sm font-medium text-on-surface mb-2">Adınız</label>
+                            <input id="first_name" name="first_name" type="text" required value="{{ first_name or '' }}" class="{{ input_classes }}" placeholder="Adınız">
+                        </div>
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-on-surface mb-2">Soyadınız</label>
+                            <input id="last_name" name="last_name" type="text" required value="{{ last_name or '' }}" class="{{ input_classes }}" placeholder="Soyadınız">
+                        </div>
+                        <div>
+                            <label for="membership_type" class="block text-sm font-medium text-on-surface mb-2">Üyelik Türü</label>
+                            <select id="membership_type" name="membership_type" class="{{ input_classes }}" required>
+                                <option value="bireysel" {% if membership_type == 'bireysel' %}selected{% endif %}>Bireysel</option>
+                                <option value="kurumsal" {% if membership_type == 'kurumsal' %}selected{% endif %}>Kurumsal</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="country_code" class="block text-sm font-medium text-on-surface mb-2">Ülke</label>
+                            <select id="country_code" name="country_code" class="{{ input_classes }}" required>
+                                {% for country in countries %}
+                                    <option value="{{ country.dial_code }}" {% if selected_country == country.dial_code %}selected{% endif %}>{{ country.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-on-surface mb-2">Doğum Tarihiniz</label>
+                                <div class="grid grid-cols-3 md:max-w-md gap-3">
+                                    <select name="dob_day" class="{{ input_classes }}" required>
+                                        <option value="">Gün</option>
+                                        {% for day in range(1,32) %}
+                                            <option value="{{ '%02d'|format(day) }}" {% if dob_day == '%02d'|format(day) %}selected{% endif %}>{{ day }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select name="dob_month" class="{{ input_classes }}" required>
+                                        <option value="">Ay</option>
+                                        {% for month in range(1,13) %}
+                                            <option value="{{ '%02d'|format(month) }}" {% if dob_month == '%02d'|format(month) %}selected{% endif %}>{{ month }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select name="dob_year" class="{{ input_classes }}" required>
+                                        <option value="">Yıl</option>
+                                        {% for year in range(1940, datetime.utcnow().year + 1) | reverse %}
+                                            <option value="{{ year }}" {% if dob_year == year|string %}selected{% endif %}>{{ year }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="block text-sm font-medium text-on-surface mb-2">Cinsiyetiniz</span>
+                                <div class="flex items-center gap-5">
+                                    <label class="inline-flex items-center gap-2 text-sm text-on-surface">
+                                        <input type="radio" name="gender" value="kadin" class="accent-primary" {% if gender != 'erkek' %}checked{% endif %}>
+                                        Kadın
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-sm text-on-surface">
+                                        <input type="radio" name="gender" value="erkek" class="accent-primary" {% if gender == 'erkek' %}checked{% endif %}>
+                                        Erkek
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% if requires_referral %}
+                        <div>
+                            <label for="sponsor_code" class="block text-sm font-medium text-on-surface mb-2">Referans Kodu</label>
+                            <input id="sponsor_code" name="sponsor_code" type="text" minlength="3" required value="{{ sponsor_code or '' }}" class="{{ input_classes }} uppercase tracking-wide" placeholder="TR12345678">
+                        </div>
+                        {% else %}
+                        <div class="px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container text-sm md:col-span-2">
+                            İlk lider hesabı oluşturuluyor. Referans kodu gerekmiyor.
+                        </div>
+                        {% endif %}
+                        <div>
+                            <label for="identity_number" class="block text-sm font-medium text-on-surface mb-2">T.C. Kimlik No</label>
+                            <input id="identity_number" name="identity_number" type="text" required value="{{ identity_number or '' }}" class="{{ input_classes }}" placeholder="11 haneli kimlik numaranız">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-on-surface mb-2">Telefon Numaranız</label>
+                            <input id="phone" name="phone" type="tel" required value="{{ phone or '' }}" class="{{ input_classes }}" placeholder="+905551112233">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-on-surface mb-2">E-posta Adresiniz</label>
+                            <input id="email" name="email" type="email" required value="{{ email or '' }}" class="{{ input_classes }}" placeholder="ornek@mail.com">
+                        </div>
+                        <div class="flex items-center mt-6">
+                            <label class="inline-flex items-center gap-2 text-sm text-on-surface">
+                                <input type="checkbox" name="is_foreign" value="1" class="accent-primary" {% if is_foreign %}checked{% endif %}>
+                                T.C. uyruklu değilim.
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="password_confirm" class="block text-sm font-medium text-on-surface mb-1">Şifre Tekrarı</label>
-                    <input
-                        id="password_confirm"
-                        name="password_confirm"
-                        type="password"
-                        required
-                        class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
-                        placeholder="Şifrenizi tekrar girin"
-                    >
+                <div class="space-y-6">
+                    <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">home_pin</span>
+                        İletişim ve Adres Bilgileri
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-on-surface mb-2">Şehir</label>
+                            <select id="city" name="city" class="{{ input_classes }}" required>
+                                <option value="">Şehir seçiniz</option>
+                                {% for province in province_list %}
+                                    <option value="{{ province }}" {% if city == province %}selected{% endif %}>{{ province }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="district" class="block text-sm font-medium text-on-surface mb-2">İlçe</label>
+                            <select id="district" name="district" class="{{ input_classes }}" {% if not city %}disabled{% endif %} required>
+                                <option value="">İlçe seçiniz</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="neighborhood" class="block text-sm font-medium text-on-surface mb-2">Mahalle / Köy</label>
+                            <input id="neighborhood" name="neighborhood" type="text" value="{{ neighborhood or '' }}" class="{{ input_classes }}" placeholder="Mahalle seçin">
+                        </div>
+                        <div>
+                            <label for="postal_code" class="block text-sm font-medium text-on-surface mb-2">Posta Kodu</label>
+                            <input id="postal_code" name="postal_code" type="text" value="{{ postal_code or '' }}" class="{{ input_classes }}" placeholder="Posta kodu">
+                        </div>
+                        <div>
+                            <label for="tax_office" class="block text-sm font-medium text-on-surface mb-2">Vergi Dairesi</label>
+                            <input id="tax_office" name="tax_office" type="text" value="{{ tax_office or '' }}" class="{{ input_classes }}" placeholder="Vergi dairesi">
+                        </div>
+                        <div>
+                            <label for="tax_number" class="block text-sm font-medium text-on-surface mb-2">Vergi Numarası</label>
+                            <input id="tax_number" name="tax_number" type="text" value="{{ tax_number or '' }}" class="{{ input_classes }}" placeholder="Vergi numarası">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="address" class="block text-sm font-medium text-on-surface mb-2">Adres</label>
+                            <textarea id="address" name="address" rows="3" class="{{ input_classes }} resize-y" placeholder="Adresinizi giriniz">{{ address or '' }}</textarea>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="space-y-6">
+                    <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">lock</span>
+                        Şifre ve Sözleşmeler
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-on-surface mb-2">Şifreniz</label>
+                            <input id="password" name="password" type="password" required minlength="6" class="{{ input_classes }}" placeholder="En az 6 karakter">
+                        </div>
+                        <div>
+                            <label for="password_confirm" class="block text-sm font-medium text-on-surface mb-2">Şifreniz (Tekrar)</label>
+                            <input id="password_confirm" name="password_confirm" type="password" required class="{{ input_classes }}" placeholder="Şifrenizi tekrar girin">
+                        </div>
+                    </div>
+                    <div class="space-y-3 text-sm text-on-surface-variant">
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="agreement_distributor" value="1" class="mt-1 accent-primary" {% if agreement_distributor %}checked{% endif %} required>
+                            <span>Aydınlatılmış Bağımsız Girişimci Sözleşmesini okudum ve kabul ediyorum.</span>
+                        </label>
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="agreement_kvkk" value="1" class="mt-1 accent-primary" {% if agreement_kvkk %}checked{% endif %} required>
+                            <span>K.V.K.K. Sözleşmesini okudum ve kabul ediyorum.</span>
+                        </label>
+                    </div>
+                </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p class="text-xs text-on-surface-variant">
+                    Kaydınızı tamamlayarak Bestwork kullanıcı sözleşmesini ve gizlilik politikasını kabul etmiş olursunuz.
+                </p>
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-10 py-3 rounded-full bg-primary text-on-primary font-semibold tracking-wide hover:elevation-2 transition-all">
+                        <span>KAYDIMI TAMAMLA</span>
+                        <span class="material-symbols-outlined text-base">check_circle</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="px-8 py-6 bg-surface-variant/60 border-t border-outline-variant/50">
+                <p class="text-sm text-center text-on-surface-variant">
+                    Zaten bir hesabınız var mı?
+                    <a href="{{ url_for('login') }}" class="text-primary font-semibold hover:underline">Giriş yapın.</a>
+                </p>
             </div>
-
-            <button
-                type="submit"
-                class="w-full py-3 rounded-full bg-primary text-on-primary font-semibold hover:elevation-2 transition-all state-layer"
-            >
-                Kayıt Ol
-            </button>
-        </form>
-
-        <p class="text-sm text-center text-on-surface-variant mt-6">
-            Zaten bir hesabınız var mı?
-            <a href="{{ url_for('login') }}" class="text-primary font-medium hover:underline">Giriş yapın.</a>
-        </p>
+        </div>
     </div>
 </section>
+<script>
+(function () {
+    const provinces = {{ province_map|tojson }};
+    const citySelect = document.getElementById('city');
+    const districtSelect = document.getElementById('district');
+    const initialDistrict = {{ (district or '')|tojson }};
+
+    if (!citySelect || !districtSelect) {
+        return;
+    }
+
+    function populateDistricts(selectedCity, selectedDistrict) {
+        while (districtSelect.options.length > 1) {
+            districtSelect.remove(1);
+        }
+        if (!selectedCity || !provinces[selectedCity]) {
+            districtSelect.value = '';
+            districtSelect.disabled = true;
+            return;
+        }
+        districtSelect.disabled = false;
+        provinces[selectedCity].forEach(function (district) {
+            const option = document.createElement('option');
+            option.value = district;
+            option.textContent = district;
+            if (district === selectedDistrict) {
+                option.selected = true;
+            }
+            districtSelect.appendChild(option);
+        });
+    }
+
+    citySelect.addEventListener('change', function () {
+        populateDistricts(this.value, '');
+    });
+
+    populateDistricts(citySelect.value, initialDistrict);
+})();
+</script>
 {% endblock %}
