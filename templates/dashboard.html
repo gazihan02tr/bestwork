@@ -1,0 +1,64 @@
+{% extends "inc/base.html" %}
+{% block title %}Yönetim Paneli{% endblock %}
+{% block content %}
+<section class="py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="bg-surface rounded-3xl elevation-2 p-6 sm:p-8 flex flex-col md:flex-row items-start gap-6">
+            <a href="#" class="shrink-0 w-28 h-28 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl font-semibold border border-primary/30">
+                {% if current_user and current_user.name %}
+                    {{ current_user.name[0]|upper }}
+                {% else %}
+                    TR
+                {% endif %}
+            </a>
+            <div class="flex-1 space-y-4">
+                <div>
+                    <h1 class="text-2xl font-semibold text-on-surface">Hoş geldiniz, {{ current_user.name }}</h1>
+                    <p class="text-sm text-on-surface-variant">Aşağıdaki bağlantıyı paylaşarak yeni üyelerin kayıt olmasını sağlayabilirsiniz.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                        <p class="text-xs uppercase tracking-wide text-primary/70 mb-1">Referans Kodunuz</p>
+                        <p class="text-2xl font-semibold text-primary">{{ referral_code or 'Tanımlanmadı' }}</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-surface-variant border border-outline-variant">
+                        <p class="text-xs uppercase tracking-wide text-on-surface-variant mb-1">Referans Linki</p>
+                        {% if referral_link %}
+                        <input type="text" readonly value="{{ referral_link }}" class="w-full px-3 py-2 rounded-lg bg-white text-on-surface border border-outline focus:outline-none text-sm">
+                        {% else %}
+                        <p class="text-sm text-on-surface-variant">Henüz referans linki oluşturulmadı.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-surface rounded-2xl elevation-1 p-6 border border-outline-variant/40">
+                <h2 class="text-lg font-semibold text-on-surface mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined">group_add</span>
+                    Sol Kolunuz
+                </h2>
+                {% if left_member %}
+                    <p class="text-on-surface font-medium">{{ left_member.name }}</p>
+                    <p class="text-sm text-on-surface-variant">Kod: {{ left_member.referral_code }}</p>
+                {% else %}
+                    <p class="text-sm text-on-surface-variant">Bu pozisyon için henüz bir üye yok.</p>
+                {% endif %}
+            </div>
+            <div class="bg-surface rounded-2xl elevation-1 p-6 border border-outline-variant/40">
+                <h2 class="text-lg font-semibold text-on-surface mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined">group_add</span>
+                    Sağ Kolunuz
+                </h2>
+                {% if right_member %}
+                    <p class="text-on-surface font-medium">{{ right_member.name }}</p>
+                    <p class="text-sm text-on-surface-variant">Kod: {{ right_member.referral_code }}</p>
+                {% else %}
+                    <p class="text-sm text-on-surface-variant">Bu pozisyon için henüz bir üye yok.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

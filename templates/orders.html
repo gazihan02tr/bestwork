@@ -1,0 +1,55 @@
+{% extends "inc/base.html" %}
+{% block title %}Siparişlerim{% endblock %}
+{% block content %}
+<section class="py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-semibold text-on-background mb-8">Siparişlerim</h1>
+
+        {% if orders %}
+            <div class="space-y-6">
+                {% for order in orders %}
+                    <article class="bg-surface rounded-2xl elevation-1 p-6">
+                        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <div>
+                                <p class="text-sm text-on-surface-variant">Sipariş Tarihi</p>
+                                <p class="font-semibold text-on-surface">
+                                    {{ order.created_at.strftime("%d %B %Y %H:%M") if order.created_at else "" }}
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container text-sm font-semibold">
+                                <span class="material-symbols-outlined text-base">local_shipping</span>
+                                {{ order.status|capitalize }}
+                            </span>
+                        </header>
+
+                        <ul class="divide-y divide-outline-variant/50">
+                            {% for item in order["items"] %}
+                                <li class="py-3 flex items-center justify-between text-sm text-on-surface">
+                                    <div>
+                                        <p class="font-semibold">{{ item.name }}</p>
+                                        <p class="text-on-surface-variant">Adet: {{ item.quantity }}</p>
+                                    </div>
+                                    <p class="font-semibold">{{ "%.2f"|format(item.price * item.quantity) }} ₺</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <footer class="mt-4 flex items-center justify-between text-lg font-semibold text-on-surface">
+                            <span>Toplam</span>
+                            <span>{{ "%.2f"|format(order.total) }} ₺</span>
+                        </footer>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-surface rounded-2xl elevation-1 px-8 py-12 text-center">
+                <p class="text-lg text-on-surface-variant mb-6">Henüz bir siparişiniz bulunmuyor.</p>
+                <a href="{{ url_for('index') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-semibold hover:elevation-2 transition-all state-layer">
+                    Şimdi alışverişe başlayın
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

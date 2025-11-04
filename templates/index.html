@@ -1,0 +1,236 @@
+{% extends "inc/base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+  <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-primary via-purple-600 to-purple-800 text-on-primary relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-20 left-20 w-96 h-96 bg-secondary rounded-full blur-3xl"></div>
+            <div class="absolute bottom-20 right-20 w-96 h-96 bg-secondary rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full">
+                <div class="absolute top-10 right-1/4 w-64 h-64 bg-amber-300 rounded-full blur-3xl opacity-30"></div>
+            </div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
+            <div class="max-w-2xl animate-fade-in-up">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-normal mb-4 leading-tight">
+                    Premium Yaşam
+                </h1>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    Bestwork ile Başlar
+                </h2>
+                <p class="text-lg sm:text-xl mb-8 opacity-95 leading-relaxed">
+                    60 yılı aşkın deneyimle, sağlık, güzellik ve ev bakımında dünya standartlarında ürünler sunuyoruz
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button class="px-6 py-3.5 bg-secondary text-on-secondary rounded-full font-medium hover:elevation-1 transition-all state-layer inline-flex items-center gap-2 shadow-lg">
+                        Ürünleri Keşfet
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                    <button class="px-6 py-3.5 border-2 border-secondary/50 text-on-primary rounded-full font-medium hover:bg-secondary/20 transition-all state-layer">
+                        Hakkımızda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="py-12 sm:py-16 lg:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10">
+                <h2 class="text-3xl sm:text-4xl font-normal mb-2 text-on-background">Kategoriler</h2>
+                <p class="text-lg text-on-surface-variant">İhtiyacınıza uygun ürün grubunu seçin</p>
+            </div>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                
+                <!-- Category Card 1 -->
+                <a href="#" class="group bg-surface rounded-2xl elevation-1 hover:elevation-3 overflow-hidden transition-all duration-300 state-layer">
+                    <div class="aspect-square bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-400/90 to-purple-600/90"></div>
+                        <img src="https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=800&q=80" alt="Beslenme" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60">
+                        <div class="absolute inset-0 bg-amber-300 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <span class="relative z-10 text-white text-6xl font-bold">B</span>
+                    </div>
+                    <div class="p-4 sm:p-6">
+                        <h3 class="text-lg sm:text-xl font-medium mb-1">Beslenme</h3>
+                        <p class="text-sm text-on-surface-variant">Vitaminler ve takviyeler</p>
+                    </div>
+                </a>
+
+                <!-- Category Card 2 -->
+                <a href="#" class="group bg-surface rounded-2xl elevation-1 hover:elevation-3 overflow-hidden transition-all duration-300 state-layer">
+                    <div class="aspect-square bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-amber-400/90 to-amber-600/90"></div>
+                        <img src="https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=800&q=80" alt="Güzellik" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60">
+                        <div class="absolute inset-0 bg-purple-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <span class="relative z-10 text-white text-6xl font-bold">G</span>
+                    </div>
+                    <div class="p-4 sm:p-6">
+                        <h3 class="text-lg sm:text-xl font-medium mb-1">Güzellik</h3>
+                        <p class="text-sm text-on-surface-variant">Cilt ve saç bakımı</p>
+                    </div>
+                </a>
+
+                <!-- Category Card 3 -->
+                <a href="#" class="group bg-surface rounded-2xl elevation-1 hover:elevation-3 overflow-hidden transition-all duration-300 state-layer">
+                    <div class="aspect-square bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/90 to-yellow-600/90"></div>
+                        <img src="https://images.unsplash.com/photo-1585421514738-01798e348b17?w=800&q=80" alt="Ev Bakımı" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60">
+                        <div class="absolute inset-0 bg-purple-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <span class="relative z-10 text-white text-6xl font-bold">E</span>
+                    </div>
+                    <div class="p-4 sm:p-6">
+                        <h3 class="text-lg sm:text-xl font-medium mb-1">Ev Bakımı</h3>
+                        <p class="text-sm text-on-surface-variant">Temizlik ürünleri</p>
+                    </div>
+                </a>
+
+                <!-- Category Card 4 -->
+                <a href="#" class="group bg-surface rounded-2xl elevation-1 hover:elevation-3 overflow-hidden transition-all duration-300 state-layer">
+                    <div class="aspect-square bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-violet-400/90 to-violet-600/90"></div>
+                        <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80" alt="Kişisel Bakım" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60">
+                        <div class="absolute inset-0 bg-amber-300 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <span class="relative z-10 text-white text-6xl font-bold">K</span>
+                    </div>
+                    <div class="p-4 sm:p-6">
+                        <h3 class="text-lg sm:text-xl font-medium mb-1">Kişisel Bakım</h3>
+                        <p class="text-sm text-on-surface-variant">Günlük bakım</p>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section id="urunler" class="py-12 sm:py-16 lg:py-20 bg-surface-variant/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="flex items-end justify-between mb-10">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-normal mb-2 text-on-background">Öne Çıkan Ürünler</h2>
+                    <p class="text-lg text-on-surface-variant">En çok tercih edilen ürünlerimiz</p>
+                </div>
+                <a href="#urunler" class="hidden sm:inline-flex items-center gap-1 text-primary font-medium hover:gap-2 transition-all">
+                    Tümünü Gör
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+            </div>
+
+            {% if products %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {% for product in products %}
+                <div class="group bg-surface rounded-2xl elevation-2 hover:elevation-4 overflow-hidden transition-all duration-300">
+                    <div class="relative aspect-square bg-surface-variant flex items-center justify-center overflow-hidden">
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                        <button class="absolute top-3 right-3 p-2 bg-surface rounded-full elevation-1 state-layer text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="material-symbols-outlined text-xl">favorite</span>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-on-surface-variant">{{ product.category }}</p>
+                            <h3 class="font-medium text-lg text-on-surface line-clamp-2">{{ product.name }}</h3>
+                            <p class="text-sm text-on-surface-variant line-clamp-2 mt-1">{{ product.description }}</p>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-2xl font-bold text-primary">{{ '%.2f'|format(product.price) }} ₺</span>
+                        </div>
+                        <form method="post" action="{{ url_for('add_to_cart', product_id=product.id) }}" class="flex items-center gap-3">
+                            <label for="qty-{{ product.id }}" class="text-sm text-on-surface-variant">Adet</label>
+                            <input
+                                id="qty-{{ product.id }}"
+                                name="quantity"
+                                type="number"
+                                min="1"
+                                value="1"
+                                class="w-16 px-3 py-2 rounded-lg border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary text-center bg-surface-variant"
+                            >
+                            <button type="submit" class="flex-1 py-3 bg-primary text-on-primary rounded-full font-medium hover:elevation-1 transition-all state-layer">
+                                Sepete Ekle
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-surface rounded-2xl elevation-1 px-8 py-12 text-center text-on-surface-variant">
+                Şu anda listelenecek ürün bulunamadı. Lütfen daha sonra tekrar deneyin.
+            </div>
+            {% endif %}
+
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="py-12 sm:py-16 lg:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                
+                <!-- Benefit 1 -->
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-container rounded-full mb-4">
+                        <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+                    </div>
+                    <h3 class="text-xl font-medium mb-2">Ücretsiz Kargo</h3>
+                    <p class="text-on-surface-variant">500 TL ve üzeri tüm siparişlerinizde</p>
+                </div>
+
+                <!-- Benefit 2 -->
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-secondary-container rounded-full mb-4">
+                        <span class="material-symbols-outlined text-secondary text-3xl">verified_user</span>
+                    </div>
+                    <h3 class="text-xl font-medium mb-2">Memnuniyet Garantisi</h3>
+                    <p class="text-on-surface-variant">180 gün içinde koşulsuz iade</p>
+                </div>
+
+                <!-- Benefit 3 -->
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-tertiary-container rounded-full mb-4">
+                        <span class="material-symbols-outlined text-tertiary text-3xl">support_agent</span>
+                    </div>
+                    <h3 class="text-xl font-medium mb-2">7/24 Destek</h3>
+                    <p class="text-on-surface-variant">Uzman ekibimiz her zaman yanınızda</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-primary via-purple-600 to-purple-700 text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-secondary rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-400 rounded-full blur-3xl"></div>
+        </div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <span class="material-symbols-outlined text-secondary mb-4" style="font-size: 48px;">mail</span>
+            <h2 class="text-3xl sm:text-4xl font-normal mb-3">Kampanyalardan Haberdar Olun</h2>
+            <p class="text-lg opacity-90 mb-8">Özel fırsatlar ve yeni ürünlerden ilk siz haberdar olun</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input 
+                    type="email" 
+                    placeholder="E-posta adresiniz" 
+                    class="flex-1 px-6 py-4 rounded-full bg-white/20 backdrop-blur-sm text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-secondary border border-white/30"
+                >
+                <button class="px-8 py-4 bg-secondary text-on-secondary rounded-full font-medium hover:bg-amber-500 transition-all shadow-lg whitespace-nowrap">
+                    Kayıt Ol
+                </button>
+            </div>
+        </div>
+    </section>
+
+   
+{% endblock %}
+
+
+  
