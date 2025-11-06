@@ -209,10 +209,16 @@
                             <span class="flex flex-col leading-tight">
                                 <span>Merhaba, {{ current_user.name.split(' ')[0] }}</span>
                                 {% if current_user.referral_code %}
-                                    <span class="text-xs text-primary/80 font-semibold tracking-wide">Referans: {{ current_user.referral_code }}</span>
+                                    <span class="text-xs text-primary/80 font-semibold tracking-wide">ID'niz: {{ current_user.referral_code }}</span>
                                 {% endif %}
                             </span>
                         </a>
+                        <button type="button" id="placement-alert-btn" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all relative" aria-label="Yerleştirme Bekleyenler" title="Yerleştirme Bekleyenler">
+                            <span class="material-symbols-outlined">notifications</span>
+                            {% if pending_placements %}
+                            <span class="absolute top-1 right-1 bg-error text-on-error text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center elevation-1">{{ pending_placements|length }}</span>
+                            {% endif %}
+                        </button>
                         <a href="{{ url_for('orders') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all" aria-label="Siparişlerim" title="Siparişlerim">
                             <span class="material-symbols-outlined">receipt_long</span>
                         </a>
@@ -369,3 +375,42 @@
     </footer>
         {% endblock %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('placement-modal');
+    const backdrop = document.getElementById('placement-modal-backdrop');
+    const openBtn = document.getElementById('placement-alert-btn');
+    const closeBtn = document.getElementById('placement-modal-close');
+
+    function openModal() {
+        if (!modal || !backdrop) return;
+        modal.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        if (!modal || !backdrop) return;
+        modal.classList.add('hidden');
+        backdrop.classList.add('hidden');
+    }
+
+    if (openBtn) {
+        openBtn.addEventListener('click', function () {
+            openModal();
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+            closeModal();
+        });
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', function () {
+            closeModal();
+        });
+    }
+});
+</script>

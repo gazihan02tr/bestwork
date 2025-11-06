@@ -1,64 +1,181 @@
 {% extends "inc/base.html" %}
 {% block title %}Yönetim Paneli{% endblock %}
 {% block content %}
-<section class="py-12">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div class="bg-surface rounded-3xl elevation-2 p-6 sm:p-8 flex flex-col md:flex-row items-start gap-6">
-            <a href="#" class="shrink-0 w-28 h-28 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl font-semibold border border-primary/30">
-                {% if current_user and current_user.name %}
-                    {{ current_user.name[0]|upper }}
-                {% else %}
-                    TR
-                {% endif %}
-            </a>
-            <div class="flex-1 space-y-4">
-                <div>
-                    <h1 class="text-2xl font-semibold text-on-surface">Hoş geldiniz, {{ current_user.name }}</h1>
-                    <p class="text-sm text-on-surface-variant">Aşağıdaki bağlantıyı paylaşarak yeni üyelerin kayıt olmasını sağlayabilirsiniz.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="p-4 rounded-2xl bg-primary/5 border border-primary/20">
-                        <p class="text-xs uppercase tracking-wide text-primary/70 mb-1">Referans Kodunuz</p>
-                        <p class="text-2xl font-semibold text-primary">{{ referral_code or 'Tanımlanmadı' }}</p>
+<section class="py-16 bg-gradient-to-br from-surface via-surface-variant/40 to-surface">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-8">
+            <aside class="bg-white rounded-3xl shadow-xl border border-outline-variant/40 overflow-hidden">
+                <div class="px-6 py-6 bg-gradient-to-b from-primary/70 to-primary text-white text-center">
+                    <div class="relative w-36 h-36 mx-auto">
+                        <img src="{{ url_for('static', filename='kariyer/elmas.png') }}" alt="Çerçeve" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-lg pointer-events-none select-none">
+                        <div class="absolute inset-[10%] rounded-full overflow-hidden shadow-xl shadow-black/20">
+                            <img src="https://yt3.googleusercontent.com/u5Oi1RfAeng_zg6Qejxpf6DbM0tConjZFkklGDNMkrKW3K2dn62H1XYmjnEeblvfrCvtp8pgXg=s900-c-k-c0x00ffffff-no-rj" alt="Profil" class="w-full h-full  object-cover">
+                        </div>
                     </div>
-                    <div class="p-4 rounded-2xl bg-surface-variant border border-outline-variant">
-                        <p class="text-xs uppercase tracking-wide text-on-surface-variant mb-1">Referans Linki</p>
+                    <h2 class="mt-4 text-xl font-semibold">{{ current_user.name }}</h2>
+                    <p class="text-xs uppercase tracking-[0.35em] text-white/80 mt-1">Bestwork</p>
+                    <button type="button" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-semibold shadow hover:bg-white/90 transition">
+                        <span class="material-symbols-outlined text-base">photo_camera</span>
+                        Resim Yükle
+                    </button>
+                </div>
+                <div class="px-6 py-6 space-y-6">
+                    <div class="space-y-1 text-center">
+                        <p class="text-xs uppercase tracking-wide text-amber-500 font-semibold">Üye Numaranız</p>
+                        <p class="text-lg font-semibold text-on-surface">{{ current_user.referral_code or 'Tanımlanmadı' }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs uppercase tracking-wide text-on-surface-variant font-semibold">Üye Kayıt Linki</p>
                         {% if referral_link %}
-                        <input type="text" readonly value="{{ referral_link }}" class="w-full px-3 py-2 rounded-lg bg-white text-on-surface border border-outline focus:outline-none text-sm">
+                        <div class="flex items-center gap-2">
+                            <input id="referral-link" type="text" readonly value="{{ referral_link }}" class="flex-1 px-3 py-2 rounded-lg border border-outline focus:outline-none text-sm bg-surface-variant/60">
+                            <button type="button" id="copy-referral" class="p-2 rounded-lg bg-primary text-on-primary hover:elevation-2 transition" aria-label="Bağlantıyı kopyala">
+                                <span class="material-symbols-outlined text-base">content_copy</span>
+                            </button>
+                            <a href="{{ referral_link }}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-green-500 text-on-primary hover:elevation-2 transition" aria-label="Bağlantıyı aç">
+                                <span class="material-symbols-outlined text-base">open_in_new</span>
+                            </a>
+                        </div>
                         {% else %}
-                        <p class="text-sm text-on-surface-variant">Henüz referans linki oluşturulmadı.</p>
+                        <p class="text-sm text-on-surface-variant">Henüz üye linki oluşturulmadı.</p>
                         {% endif %}
                     </div>
+            </aside>
+
+            <div class="space-y-6">
+                <div class="px-8 py-10 bg-white rounded-3xl shadow-2xl border border-outline-variant/40">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {% for card in dashboard_cards %}
+                        <div
+                            class="relative rounded-2xl p-6 text-white overflow-hidden bg-gradient-to-br {{ card.color }} shadow-lg shadow-black/10 h-full transition transform hover:-translate-y-1 hover:shadow-2xl {% if card.title == 'Yerleşim Bekleyen' %}cursor-pointer{% endif %}"
+                            {% if card.title == 'Yerleşim Bekleyen' %}data-open-placement{% endif %}
+                        >
+                            <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
+                            <div class="flex flex-col h-full justify-between">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-white/70 mb-2 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">{{ card.icon }}</span>
+                                            {{ card.title }}
+                                        </p>
+                                        <p class="text-3xl font-semibold">{{ card.value }}</p>
+                                        {% if card.subtitle %}
+                                            <p class="text-xs mt-2 text-white/70">{{ card.subtitle }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <span class="material-symbols-outlined text-4xl text-white/30">{{ card.icon }}</span>
+                                </div>
+                                {% if card.title == 'Yerleşim Bekleyen' %}
+                                <p class="mt-4 text-xs text-white/80">
+                                    {% if pending_placements %}
+                                        Yerleştirmek için tıklayın.
+                                    {% else %}
+                                        Bekleyen üye yok.
+                                    {% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-surface rounded-2xl elevation-1 p-6 border border-outline-variant/40">
-                <h2 class="text-lg font-semibold text-on-surface mb-3 flex items-center gap-2">
-                    <span class="material-symbols-outlined">group_add</span>
-                    Sol Kolunuz
-                </h2>
-                {% if left_member %}
-                    <p class="text-on-surface font-medium">{{ left_member.name }}</p>
-                    <p class="text-sm text-on-surface-variant">Kod: {{ left_member.referral_code }}</p>
-                {% else %}
-                    <p class="text-sm text-on-surface-variant">Bu pozisyon için henüz bir üye yok.</p>
-                {% endif %}
-            </div>
-            <div class="bg-surface rounded-2xl elevation-1 p-6 border border-outline-variant/40">
-                <h2 class="text-lg font-semibold text-on-surface mb-3 flex items-center gap-2">
-                    <span class="material-symbols-outlined">group_add</span>
-                    Sağ Kolunuz
-                </h2>
-                {% if right_member %}
-                    <p class="text-on-surface font-medium">{{ right_member.name }}</p>
-                    <p class="text-sm text-on-surface-variant">Kod: {{ right_member.referral_code }}</p>
-                {% else %}
-                    <p class="text-sm text-on-surface-variant">Bu pozisyon için henüz bir üye yok.</p>
-                {% endif %}
-            </div>
-        </div>
     </div>
 </section>
+
+{% if pending_placements %}
+<div id="placement-modal-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] hidden"></div>
+<div id="placement-modal" class="fixed inset-x-0 top-24 mx-auto max-w-3xl w-full z-[81] hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-outline-variant/50 overflow-hidden">
+        <div class="px-6 py-4 border-b border-outline-variant/40 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">person_add</span>
+                Yerleşim Bekleyen Üyeler
+            </h3>
+            <button type="button" id="placement-modal-close" class="p-2 rounded-full text-on-surface hover:bg-outline-variant/40 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="max-h-[60vh] overflow-y-auto">
+            {% for pending in pending_placements %}
+            <div class="px-6 py-5 border-b border-outline-variant/30 last:border-b-0">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-base font-semibold text-on-surface">{{ pending.name }}</p>
+                        <p class="text-sm text-on-surface-variant">{{ pending.email }}</p>
+                        {% if pending.joined_at %}
+                        <p class="text-xs text-on-surface-variant mt-1">Kayıt: {{ pending.joined_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                        {% endif %}
+                        {% if pending.referral_code %}
+                        <p class="text-xs text-primary font-semibold tracking-wide mt-1">Kod: {{ pending.referral_code }}</p>
+                        {% endif %}
+                    </div>
+                    <form method="post" action="{{ url_for('assign_placement') }}" class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <input type="hidden" name="user_id" value="{{ pending.id }}">
+                        <div class="flex items-center gap-3 text-sm text-on-surface">
+                            <label class="inline-flex items-center gap-1">
+                                <input type="radio" name="placement_side" value="left" class="accent-primary" required>
+                                Sol Kol
+                            </label>
+                            <label class="inline-flex items-center gap-1">
+                                <input type="radio" name="placement_side" value="right" class="accent-primary" required>
+                                Sağ Kol
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:elevation-2 transition">
+                            Yerleştir
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('placement-modal');
+    const backdrop = document.getElementById('placement-modal-backdrop');
+    const closeBtn = document.getElementById('placement-modal-close');
+    const openButtons = document.querySelectorAll('[data-open-placement]');
+    const copyBtn = document.getElementById('copy-referral');
+    const referralInput = document.getElementById('referral-link');
+
+    function openModal() {
+        if (!modal || !backdrop) return;
+        modal.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        if (!modal || !backdrop) return;
+        modal.classList.add('hidden');
+        backdrop.classList.add('hidden');
+    }
+
+    openButtons.forEach(btn => btn.addEventListener('click', openModal));
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+    if (backdrop) {
+        backdrop.addEventListener('click', closeModal);
+    }
+
+    if (copyBtn && referralInput) {
+        copyBtn.addEventListener('click', function () {
+            referralInput.select();
+            referralInput.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">check</span>';
+                setTimeout(() => copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">content_copy</span>', 1500);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

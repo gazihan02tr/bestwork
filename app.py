@@ -400,15 +400,16 @@ def register_routes(app: Flask) -> None:
             sponsor_doc = None
             placement_parent_id = None
             placement_position = None
+            placement_status = "placed" if not requires_referral else "pending"
 
             if requires_referral:
                 if not sponsor_code:
-                    flash("Referans kodu zorunludur.", "error")
+                    flash("ID kodu zorunludur.", "error")
                     return render_form()
 
                 sponsor_doc = app.db.users.find_one({"referral_code": sponsor_code})
                 if not sponsor_doc:
-                    flash("Geçerli bir referans kodu giriniz.", "error")
+                    flash("Geçerli bir ID kodu giriniz.", "error")
                     return render_form()
 
                 sponsor_info = {
@@ -416,10 +417,8 @@ def register_routes(app: Flask) -> None:
                     "referral_code": sponsor_doc.get("referral_code"),
                 }
 
-                placement_parent_id, placement_position = find_binary_slot(app, sponsor_doc)
-                if not placement_parent_id or not placement_position:
-                    flash("Bu referans kodu için uygun yer bulunamadı. Lütfen farklı bir referans kodu deneyin.", "error")
-                    return render_form()
+                placement_parent_id = sponsor_doc.get("_id")
+                placement_status = "pending"
 
             password_hash = generate_password_hash(password)
             referral_code = generate_referral_code(app)
@@ -439,6 +438,7 @@ def register_routes(app: Flask) -> None:
                 "sponsor_id": sponsor_doc["_id"] if sponsor_doc else None,
                 "placement_parent_id": placement_parent_id,
                 "placement_position": placement_position,
+                "placement_status": placement_status,
                 "profile": {
                     "first_name": first_name,
                     "last_name": last_name,
@@ -462,14 +462,14 @@ def register_routes(app: Flask) -> None:
 
             result = app.db.users.insert_one(user_doc)
 
-            if placement_parent_id and placement_position:
-                app.db.users.update_one(
-                    {"_id": placement_parent_id},
-                    {"$set": {f"{placement_position}_child_id": result.inserted_id}},
-                )
-
             session["user_id"] = str(result.inserted_id)
-            flash(f"Kayıt işlemi tamamlandı. Referans kodunuz: {referral_code}", "success")
+            if placement_status == "pending":
+                flash(
+                    f"Kayıt işlemi tamamlandı. ID'niz: {referral_code}. Sponsor yerleştirme onayı bekleniyor.",
+                    "success",
+                )
+            else:
+                flash(f"Kayıt işlemi tamamlandı. ID'niz: {referral_code}", "success")
             return redirect(url_for("index"))
 
         sponsor_code = request.args.get("sponsor", "").strip().upper()
@@ -520,40 +520,140 @@ def register_routes(app: Flask) -> None:
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        referral_code = g.user.get("referral_code")
+        user = g.user
+        referral_code = user.get("referral_code")
         referral_link = None
         if referral_code:
             base_url = request.url_root.rstrip("/")
             referral_link = f"{base_url}{url_for('register')}?sponsor={referral_code}"
 
-        def simplify_member(member_id):
-            if not member_id:
-                return None
-            try:
-                query_id = member_id if isinstance(member_id, ObjectId) else ObjectId(member_id)
-            except Exception:
-                return None
-            doc = app.db.users.find_one(
-                {"_id": query_id},
-                {"name": 1, "referral_code": 1}
+        pending_cursor = app.db.users.find(
+            {
+                "placement_status": "pending",
+                "placement_parent_id": user["_id"],
+            },
+            {
+                "profile.first_name": 1,
+                "profile.last_name": 1,
+                "email": 1,
+                "created_at": 1,
+                "referral_code": 1,
+            },
+        )
+        pending_placements: List[Dict] = []
+        for doc in pending_cursor:
+            pending_placements.append(
+                {
+                    "id": str(doc["_id"]),
+                    "name": (
+                        f"{doc.get('profile', {}).get('first_name', '')} "
+                        f"{doc.get('profile', {}).get('last_name', '')}"
+                    ).strip()
+                    or doc.get("email", "Üye"),
+                    "email": doc.get("email"),
+                    "joined_at": doc.get("created_at"),
+                    "referral_code": doc.get("referral_code"),
+                }
             )
-            if not doc:
-                return None
-            return {
-                "id": str(doc["_id"]),
-                "name": doc.get("name", ""),
-                "referral_code": doc.get("referral_code"),
-            }
 
-        left_member = simplify_member(g.user.get("left_child_id"))
-        right_member = simplify_member(g.user.get("right_child_id"))
+        profile = user.get("profile", {})
+        sponsor_count = app.db.users.count_documents({"sponsor_id": user["_id"]})
+        team_left = app.db.users.count_documents(
+            {
+                "placement_parent_id": user["_id"],
+                "placement_position": "left",
+                "placement_status": "placed",
+            }
+        )
+        team_right = app.db.users.count_documents(
+            {
+                "placement_parent_id": user["_id"],
+                "placement_position": "right",
+                "placement_status": "placed",
+            }
+        )
+        matching_left = profile.get("matching_left", 0)
+        matching_right = profile.get("matching_right", 0)
+        personal_cv = profile.get("personal_cv", 0)
+        instant_income = profile.get("instant_income", 0)
+        pending_count = len(pending_placements)
+
+        title_value = profile.get("title") or profile.get("membership_type", "Girişimci").title()
+
+        dashboard_cards = [
+            {
+                "title": "Kariyeriniz",
+                "icon": "diamond",
+                "value": title_value,
+                "subtitle": None,
+                "color": "from-amber-600 to-amber-400",
+            },
+            {
+                "title": "Mevcut Seviyeniz",
+                "icon": "workspace_premium",
+                "value": profile.get("career", "Girişimci").title(),
+                "subtitle": profile.get("next_career"),
+                "color": "from-amber-700 to-yellow-500",
+            },
+            {
+                "title": "Girişimcilik Seviyeniz",
+                "icon": "insights",
+                "value": profile.get("level", "Başlangıç"),
+                "subtitle": None,
+                "color": "from-slate-800 to-slate-600",
+            },
+            {
+                "title": "Sponsor Olduklarım",
+                "icon": "diversity_3",
+                "value": sponsor_count,
+                "subtitle": None,
+                "color": "from-sky-700 to-sky-500",
+            },
+            {
+                "title": "Ekibim",
+                "icon": "groups_2",
+                "value": f"{team_left} / {team_right}",
+                "subtitle": "Sol / Sağ üye",
+                "color": "from-orange-600 to-amber-500",
+            },
+            {
+                "title": "Anlık Eşleşme",
+                "icon": "scale",
+                "value": f"{matching_left:.2f} / {matching_right:.2f}",
+                "subtitle": "Sol / Sağ CV",
+                "color": "from-orange-500 to-orange-600",
+            },
+            {
+                "title": "Toplam Kazanç",
+                "icon": "attach_money",
+                "value": f"{personal_cv:,.2f} CV",
+                "subtitle": None,
+                "color": "from-emerald-600 to-emerald-500",
+            },
+            {
+                "title": "Yerleşim Bekleyen",
+                "icon": "person_add",
+                "value": pending_count,
+                "subtitle": "Onay bekleyen",
+                "color": "from-purple-600 to-fuchsia-500",
+                "action": pending_count > 0,
+            },
+            {
+                "title": "Anlık Kazanç",
+                "icon": "payments",
+                "value": f"{instant_income:,.2f} ₺",
+                "subtitle": None,
+                "color": "from-green-600 to-green-500",
+            },
+        ]
 
         return render_template(
             "dashboard.html",
             referral_code=referral_code,
             referral_link=referral_link,
-            left_member=left_member,
-            right_member=right_member,
+            dashboard_cards=dashboard_cards,
+            pending_placements=pending_placements,
+            profile=profile,
         )
 
     @app.route("/login", methods=["GET", "POST"])
@@ -685,9 +785,68 @@ def register_routes(app: Flask) -> None:
         )
         return render_template("orders.html", orders=user_orders)
 
+    @app.route("/placement/assign", methods=["POST"])
+    @login_required
+    def assign_placement():
+        placement_user_id = request.form.get("user_id", "").strip()
+        placement_side = request.form.get("placement_side", "").strip().lower()
+
+        if placement_side not in {"left", "right"}:
+            flash("Lütfen geçerli bir yerleşim seçin.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+        try:
+            pending_user = app.db.users.find_one({"_id": ObjectId(placement_user_id)})
+        except Exception:
+            pending_user = None
+
+        if not pending_user:
+            flash("Yerleştirilecek üye bulunamadı.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+        if pending_user.get("placement_status") != "pending":
+            flash("Bu üye zaten yerleştirilmiş.", "warning")
+            return redirect(request.referrer or url_for("index"))
+
+        parent_id = pending_user.get("placement_parent_id")
+        if not parent_id or parent_id != g.user["_id"]:
+            flash("Bu üyeyi yerleştirme yetkiniz yok.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+        parent_doc = app.db.users.find_one(
+            {"_id": g.user["_id"]}, {"left_child_id": 1, "right_child_id": 1}
+        )
+        if not parent_doc:
+            flash("Sponsor bilgisi bulunamadı.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+        child_field = f"{placement_side}_child_id"
+        if parent_doc.get(child_field):
+            flash(f"{placement_side.capitalize()} kolu zaten dolu.", "error")
+            return redirect(request.referrer or url_for("index"))
+
+        app.db.users.update_one(
+            {"_id": g.user["_id"]}, {"$set": {child_field: pending_user["_id"]}}
+        )
+        app.db.users.update_one(
+            {"_id": pending_user["_id"]},
+            {
+                "$set": {
+                    "placement_status": "placed",
+                    "placement_position": placement_side,
+                }
+            },
+        )
+
+        flash(
+            f"{pending_user.get('profile', {}).get('first_name', 'Üye')} {placement_side} koluna yerleştirildi.",
+            "success",
+        )
+        return redirect(request.referrer or url_for("index"))
+
 
 def generate_referral_code(app: Flask) -> str:
-    """Her kullanıcı için benzersiz referans kodu üret."""
+    """Her kullanıcı için benzersiz ID kodu üret."""
     prefix = "TR"
     characters = string.digits
     for _ in range(50):
@@ -696,7 +855,7 @@ def generate_referral_code(app: Flask) -> str:
         code = f"{prefix}{suffix}"
         if not app.db.users.find_one({"referral_code": code}):
             return code
-    raise RuntimeError("Referans kodu oluşturulamadı. Lütfen tekrar deneyin.")
+    raise RuntimeError("ID kodu oluşturulamadı. Lütfen tekrar deneyin.")
 
 
 def find_binary_slot(app: Flask, sponsor_doc: Dict) -> Tuple[Optional[ObjectId], Optional[str]]:
@@ -735,7 +894,7 @@ def find_binary_slot(app: Flask, sponsor_doc: Dict) -> Tuple[Optional[ObjectId],
 
 
 def resolve_user_by_identifier(app: Flask, identifier: str):
-    """E-posta, telefon veya referans kodu ile kullanıcıyı bul."""
+    """E-posta, telefon veya ID kodu ile kullanıcıyı bul."""
     if not identifier:
         return None
 

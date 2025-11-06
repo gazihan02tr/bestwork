@@ -102,12 +102,13 @@
                         </div>
                         {% if requires_referral %}
                         <div>
-                            <label for="sponsor_code" class="block text-sm font-medium text-on-surface mb-2">Referans Kodu</label>
+                            <label for="sponsor_code" class="block text-sm font-medium text-on-surface mb-2">ID Kodu</label>
                             <input id="sponsor_code" name="sponsor_code" type="text" minlength="3" required value="{{ sponsor_code or '' }}" class="{{ input_classes }} uppercase tracking-wide" placeholder="TR12345678">
+                            <p class="text-xs text-on-surface-variant mt-1">Sizi davet eden üyeden aldığınız ID kodunu girin.</p>
                         </div>
                         {% else %}
                         <div class="px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container text-sm md:col-span-2">
-                            İlk lider hesabı oluşturuluyor. Referans kodu gerekmiyor.
+                            İlk lider hesabı oluşturuluyor. ID kodu gerekmiyor.
                         </div>
                         {% endif %}
                         <div>
