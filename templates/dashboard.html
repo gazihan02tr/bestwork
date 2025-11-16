@@ -3,118 +3,207 @@
 {% block content %}
 <section class="bg-gradient-to-br from-surface via-surface-variant/40 to-surface pt-0">
     <div class="w-full relative z-10">
-        <div class="bg-[#e9d9ff] text-[#2f1b69] border-b border-[#cfc0ff] shadow-sm mb-8 relative z-20">
-            <nav class="flex flex-wrap items-center justify-center gap-8 px-4 py-3 text-xs font-semibold tracking-[0.3em]">
-                <a href="{{ url_for('index') }}" class="flex items-center gap-2 text-sm font-semibold tracking-wide transition hover:text-primary">
-                    <span class="material-symbols-outlined text-lg">home</span>
-                    ANASAYFA
-                </a>
-                <div class="relative group">
-                    <button type="button" class="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold tracking-wide transition hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#e9d9ff]">
-                        <span class="material-symbols-outlined text-lg">person</span>
-                        KİŞİSEL
-                        <span class="material-symbols-outlined text-lg">keyboard_arrow_down</span>
-                    </button>
-                    <div class="absolute left-1/2 top-full -translate-x-1/2 mt-3 min-w-[240px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_12px_40px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                        <div class="flex flex-col text-[0.65rem] tracking-[0.35em] font-semibold normal-case">
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff] rounded-t-[32px]">
-                                <span class="material-symbols-outlined text-base">inventory</span>
+        <div class="bg-[#f6efff] text-[#2f1b69] border border-[#d8c8ff] shadow-sm mb-8 relative z-20 rounded-none">
+            <nav class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-3 px-5 py-2">
+                <button id="dashboard-mobile-toggle" class="lg:hidden flex items-center gap-2 border border-[#cfc0ff] bg-white/80 text-[#2f1b69] px-4 py-2 font-semibold tracking-[0.1em] uppercase text-sm shadow-sm">
+                    <span class="material-symbols-outlined text-lg">menu</span>
+                    Menü
+                </button>
+                <div id="dashboard-nav-links" class="hidden lg:flex flex-nowrap items-center justify-center gap-5 text-sm font-semibold font-sans" style="font-family: Arial, sans-serif;">
+                    <a href="{{ url_for('index') }}" class="flex items-center gap-2 text-sm font-semibold transition hover:text-primary">
+                        <span class="material-symbols-outlined text-base">home</span>
+                        {{ t("menu_home") }}
+                    </a>
+                    <div class="relative group">
+                        <button type="button" class="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold transition hover:text-primary focus:outline-none">
+                            <span class="material-symbols-outlined text-base">person</span>
+                            {{ t("menu_personal") }}
+                            <span class="material-symbols-outlined text-base">keyboard_arrow_down</span>
+                        </button>
+                        <div class="absolute left-1/2 top-full -translate-x-1/2 mt-2 w-[260px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_16px_50px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+                            <div class="flex flex-col text-sm tracking-[0.1em] font-semibold normal-case" style="font-family: Arial, sans-serif;">
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-t-[32px]">
+                                    <span class="material-symbols-outlined text-base">inventory</span>
+                                    Varlık Bilgileri
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">account_balance_wallet</span>
+                                    Banka Bilgilerim
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">badge</span>
+                                    Üyelik Bilgilerim
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">group_add</span>
+                                    Sponsor Olduklarım
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-b-[32px]">
+                                    <span class="material-symbols-outlined text-base">lock</span>
+                                    Şifre Değiştir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <button type="button" class="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold transition hover:text-primary focus:outline-none">
+                            <span class="material-symbols-outlined text-base">payments</span>
+                            {{ t("menu_bonus") }}
+                            <span class="material-symbols-outlined text-base">keyboard_arrow_down</span>
+                        </button>
+                        <div class="absolute left-1/2 top-full -translate-x-1/2 mt-2 w-[280px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_16px_50px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+                            <div class="flex flex-col text-sm tracking-[0.1em] font-semibold normal-case" style="font-family: Arial, sans-serif;">
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-t-[32px]">
+                                    <span class="material-symbols-outlined text-base">insights</span>
+                                    Prim Detayları
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">rocket_launch</span>
+                                    Hızlı Başlangıç Bonusu
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">attach_money</span>
+                                    Müşteri Kazancı
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">track_changes</span>
+                                    Kariyer Takibi
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">stars</span>
+                                    Referans Bonusu
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">share</span>
+                                    Referans ve Ekip Ağacı
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">compare_arrows</span>
+                                    Binary Hareketleri
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">emoji_events</span>
+                                    Matching Bonusu
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
+                                    <span class="material-symbols-outlined text-base">account_tree</span>
+                                    Binary Ağacı
+                                </a>
+                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-b-[32px]">
+                                    <span class="material-symbols-outlined text-base">person_add</span>
+                                    Yerleşim Bekleyenler
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold transition hover:text-primary">
+                        <span class="material-symbols-outlined text-base">support_agent</span>
+                        {{ t("menu_contact") }}
+                    </a>
+                </div>
+            </nav>
+            <div id="mobile-dashboard-menu" class="lg:hidden hidden bg-white text-[#2f1b69] border-t border-[#cfc0ff]">
+                <div class="px-4 py-4 space-y-3" style="font-family: Arial, sans-serif;">
+                    <a href="{{ url_for('index') }}" class="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.4em]">
+                        <span class="material-symbols-outlined">home</span>
+                        {{ t("menu_home") }}
+                    </a>
+                    <details class="border border-[#cfc0ff] rounded-[28px] bg-[#f7f2ff]">
+                        <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined">person</span>
+                                {{ t("menu_personal") }}
+                            </div>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </summary>
+                        <div class="flex flex-col px-3 pb-3 space-y-2">
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">inventory</span>
                                 Varlık Bilgileri
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">account_balance_wallet</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">account_balance_wallet</span>
                                 Banka Bilgilerim
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">badge</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">badge</span>
                                 Üyelik Bilgilerim
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">group_add</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">group_add</span>
                                 Sponsor Olduklarım
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff] rounded-b-[32px]">
-                                <span class="material-symbols-outlined text-base">lock</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">lock</span>
                                 Şifre Değiştir
                             </a>
                         </div>
-                    </div>
-                </div>
-                <div class="relative group">
-                    <button type="button" class="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold tracking-wide transition hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#e9d9ff]">
-                        <span class="material-symbols-outlined text-lg">payments</span>
-                        PRİM YÖNETİMİ
-                        <span class="material-symbols-outlined text-lg">keyboard_arrow_down</span>
-                    </button>
-                    <div class="absolute left-1/2 top-full -translate-x-1/2 mt-3 w-[260px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_12px_40px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                        <div class="flex flex-col text-[0.65rem] tracking-[0.25em] font-semibold normal-case">
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff] rounded-t-[32px]">
-                                <span class="material-symbols-outlined text-base">insights</span>
+                    </details>
+                    <details class="border border-[#cfc0ff] rounded-[28px] bg-[#f7f2ff]">
+                        <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined">payments</span>
+                                {{ t("menu_bonus") }}
+                            </div>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </summary>
+                        <div class="flex flex-col px-3 pb-3 space-y-2 text-sm">
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">insights</span>
                                 Prim Detayları
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">rocket_launch</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">rocket_launch</span>
                                 Hızlı Başlangıç Bonusu
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">attach_money</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">attach_money</span>
                                 Müşteri Kazancı
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">track_changes</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">track_changes</span>
                                 Kariyer Takibi
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">stars</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">stars</span>
                                 Referans Bonusu
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">share</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">share</span>
                                 Referans ve Ekip Ağacı
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">compare_arrows</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">compare_arrows</span>
                                 Binary Hareketleri
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">emoji_events</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">emoji_events</span>
                                 Matching Bonusu
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff]">
-                                <span class="material-symbols-outlined text-base">account_tree</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">account_tree</span>
                                 Binary Ağacı
                             </a>
-                            <a href="#" class="flex items-center gap-3 px-5 py-3 hover:bg-[#f0e5ff] rounded-b-[32px]">
-                                <span class="material-symbols-outlined text-base">person_add</span>
+                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
+                                <span class="material-symbols-outlined">person_add</span>
                                 Yerleşim Bekleyenler
                             </a>
                         </div>
-                    </div>
+                    </details>
+                    <a href="#" class="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.4em]">
+                        <span class="material-symbols-outlined">support_agent</span>
+                        {{ t("menu_contact") }}
+                    </a>
                 </div>
-                <a href="#" class="flex items-center gap-2 text-sm font-semibold tracking-wide transition hover:text-primary">
-                    <span class="material-symbols-outlined text-lg">swap_horiz</span>
-                    İŞLEMLERİM
-                </a>
-                <a href="#" class="flex items-center gap-2 text-sm font-semibold tracking-wide transition hover:text-primary">
-                    <span class="material-symbols-outlined text-lg">campaign</span>
-                    DUYURULAR
-                </a>
-                <a href="#" class="flex items-center gap-2 text-sm font-semibold tracking-wide transition hover:text-primary">
-                    <span class="material-symbols-outlined text-lg">support_agent</span>
-                    İLETİŞİM DESTEK
-                </a>
-            </nav>
+            </div>
         </div>
     </div>
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-0">
         <div class="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-8">
             <aside class="bg-white rounded-3xl shadow-xl border border-outline-variant/40 overflow-hidden">
                 <div class="px-6 py-6 bg-gradient-to-b from-primary/70 to-primary text-white text-center">
-                    <div class="relative w-36 h-36 mx-auto">
-                        <img src="{{ url_for('static', filename='kariyer/elmas.png') }}" alt="Çerçeve" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-lg pointer-events-none select-none">
-                        <div class="absolute inset-[10%] rounded-full overflow-hidden shadow-xl shadow-black/20">
-                            <img src="https://yt3.googleusercontent.com/u5Oi1RfAeng_zg6Qejxpf6DbM0tConjZFkklGDNMkrKW3K2dn62H1XYmjnEeblvfrCvtp8pgXg=s900-c-k-c0x00ffffff-no-rj" alt="Profil" class="w-full h-full  object-cover">
-                        </div>
+                    <div class="relative w-36 h-36 mx-auto rounded-full overflow-hidden shadow-xl shadow-black/20">
+                        <img src="https://yt3.googleusercontent.com/u5Oi1RfAeng_zg6Qejxpf6DbM0tConjZFkklGDNMkrKW3K2dn62H1XYmjnEeblvfrCvtp8pgXg=s900-c-k-c0x00ffffff-no-rj" alt="Profil" class="w-full h-full object-cover">
                     </div>
                     <h2 class="mt-4 text-xl font-semibold">{{ current_user.name }}</h2>
                     <p class="text-xs uppercase tracking-[0.35em] text-white/80 mt-1">Bestwork</p>
@@ -266,6 +355,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (backdrop) {
         backdrop.addEventListener('click', closeModal);
+    }
+
+    const mobileToggle = document.getElementById('dashboard-mobile-toggle');
+    const mobileMenu = document.getElementById('mobile-dashboard-menu');
+
+    if (mobileToggle && mobileMenu) {
+        mobileToggle.addEventListener('click', function () {
+            mobileMenu.classList.toggle('hidden');
+        });
     }
 
     if (copyBtn && referralInput) {

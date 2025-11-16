@@ -85,9 +85,9 @@
         
         /* Simple Premium Logo */
         .logo-text {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Helvetica', 'Roboto', sans-serif;
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 900;
             color: #7C3AED;
             letter-spacing: 0.05em;
             text-transform: uppercase;
@@ -157,6 +157,20 @@
         html {
             scroll-behavior: smooth;
         }
+
+        .swal2-purple-popup {
+            border: 1px solid #d8c8ff;
+            border-radius: 28px;
+            background: #fbf6ff;
+            color: #2b0c66;
+        }
+
+        .swal2-purple-title {
+            color: #2b0c66 !important;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+        }
     </style>
         {% endblock %}
 
@@ -166,12 +180,23 @@
     <!-- Top Bar -->
     <div class="bg-primary text-on-primary text-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
-            <div class="flex items-center justify-between">
-                <span class="font-medium">🎉 Yeni müşterilere özel ilk siparişte %20 indirim!</span>
-                <div class="flex items-center gap-6">
-                    <a href="#" class="hover:opacity-80 transition-opacity">Yardım</a>
-                    <a href="#" class="hover:opacity-80 transition-opacity">İletişim</a>
-                    <a href="#" class="hover:opacity-80 transition-opacity">Türkçe</a>
+            <div class="flex flex-wrap items-center justify-between gap-5">
+                <span class="font-medium">{{ t('promo_text') }}</span>
+                <div class="flex items-center gap-6 text-xs tracking-[0.2em] uppercase">
+                    <span class="flex items-center gap-1" aria-live="polite">
+                        <span class="material-symbols-outlined text-base">schedule</span>
+                        <span id="site-datetime">--.--.---- --:--</span>
+                    </span>
+                    <select
+                        id="lang-select"
+                        class="bg-transparent border border-white/40 text-on-primary text-xs tracking-[0.2em] uppercase px-3 py-1 rounded-full focus:outline-none focus:ring-2 focus:ring-primary transition"
+                    >
+                        {% for code, label in supported_languages.items() %}
+                        <option value="{{ url_for('set_language', lang=code) }}" {% if g.locale == code %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
@@ -209,36 +234,36 @@
                             <span class="flex flex-col leading-tight">
                                 <span>Merhaba, {{ current_user.name.split(' ')[0] }}</span>
                                 {% if current_user.referral_code %}
-                                    <span class="text-xs text-primary/80 font-semibold tracking-wide">ID'niz: {{ current_user.referral_code }}</span>
+                                    <span class="text-xs text-primary/80 text-center tracking-wide">{{ current_user.referral_code }}</span>
                                 {% endif %}
                             </span>
                         </a>
-                        <button type="button" id="placement-alert-btn" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all relative" aria-label="Yerleştirme Bekleyenler" title="Yerleştirme Bekleyenler">
-                            <span class="material-symbols-outlined">notifications</span>
-                            {% if pending_placements %}
-                            <span class="absolute top-1 right-1 bg-error text-on-error text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center elevation-1">{{ pending_placements|length }}</span>
-                            {% endif %}
-                        </button>
-                        <a href="{{ url_for('orders') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all" aria-label="Siparişlerim" title="Siparişlerim">
+                        <a href="{{ url_for('orders') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all" aria-label="{{ t('orders') }}" title="{{ t('orders') }}">
                             <span class="material-symbols-outlined">receipt_long</span>
+                        </a>
+                        <a href="{{ url_for('cart') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all relative" aria-label="{{ t('cart') }}" title="{{ t('cart') }}">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            {% if cart_count %}
+                            <span class="absolute top-1 right-1 bg-error text-on-error text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center elevation-1">{{ cart_count }}</span>
+                            {% endif %}
                         </a>
                         <a href="{{ url_for('logout') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all" aria-label="Çıkış Yap" title="Çıkış Yap">
                             <span class="material-symbols-outlined">logout</span>
                         </a>
                     {% else %}
                         <a href="{{ url_for('login') }}" class="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:elevation-2 transition-all">
-                            Giriş Yap
+                            {{ t('login') }}
                         </a>
                         <a href="{{ url_for('register') }}" class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:bg-surface-variant transition-all state-layer">
-                            Üye Ol
+                            {{ t('register') }}
+                        </a>
+                        <a href="{{ url_for('cart') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all relative" aria-label="Sepetim" title="Sepetim">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            {% if cart_count %}
+                            <span class="absolute top-1 right-1 bg-error text-on-error text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center elevation-1">{{ cart_count }}</span>
+                            {% endif %}
                         </a>
                     {% endif %}
-                    <a href="{{ url_for('cart') }}" class="p-3 rounded-full state-layer text-on-surface hover:bg-on-surface/8 transition-all relative" aria-label="Sepetim" title="Sepetim">
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        {% if cart_count %}
-                        <span class="absolute top-1 right-1 bg-error text-on-error text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center elevation-1">{{ cart_count }}</span>
-                        {% endif %}
-                    </a>
                 </div>
             </div>
 
@@ -247,7 +272,7 @@
                 <div class="relative">
                     <input 
                         type="text" 
-                        placeholder="Ara..." 
+                        placeholder="{{ t('search_placeholder') }}" 
                         class="w-full px-5 py-3 pr-14 rounded-full bg-white/90 text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-inner"
                     >
                     <button class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full state-layer text-on-surface-variant">
@@ -257,43 +282,96 @@
             </div>
         </div>
     </header>
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            <div class="bg-surface-variant/60 border-y border-outline-variant">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-2">
-                    {% for category, message in messages %}
-                        <div class="flex items-start gap-3 px-4 py-3 rounded-xl elevation-1 text-sm font-medium
-                            {% if category == 'success' %}bg-green-100 text-green-900
-                            {% elif category == 'error' %}bg-error/10 text-error
-                            {% elif category == 'warning' %}bg-secondary-container text-on-secondary-container
-                            {% else %}bg-white text-on-surface{% endif %}">
-                            <span class="material-symbols-outlined text-base">
-                                {% if category == 'success' %}
-                                    check_circle
-                                {% elif category == 'error' %}
-                                    error
-                                {% elif category == 'warning' %}
-                                    info
-                                {% else %}
-                                    notifications
-                                {% endif %}
-                            </span>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
-    {% endwith %}
+    {% set flash_messages = get_flashed_messages(with_categories=True) %}
 {% include "inc/menu.html" %}
 <div id="content">{% block content %}
     
     {% endblock %}</div>
 
+    {% if flash_messages %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const categoryConfig = {
+                success: { icon: 'success', title: '{{ t("alert_success") }}' },
+                error: { icon: 'error', title: '{{ t("alert_error") }}' },
+                warning: { icon: 'warning', title: '{{ t("alert_warning") }}' },
+                info: { icon: 'info', title: '{{ t("alert_info") }}' },
+                default: { icon: 'question', title: '{{ t("alert_default") }}' },
+            };
+
+            const flashMessages = {{ flash_messages|tojson|safe }};
+            if (!flashMessages.length) return;
+
+            const showFlash = ([category, message]) => {
+                const config = categoryConfig[category] || categoryConfig.default;
+                return Swal.fire({
+                    icon: config.icon,
+                    title: config.title,
+                    text: message,
+                    background: '#fbf6ff',
+                    color: '#2b0c66',
+                    customClass: {
+                        popup: 'swal2-purple-popup',
+                        title: 'swal2-purple-title',
+                    },
+                    confirmButtonColor: '#7C3AED',
+                    showCloseButton: true,
+                });
+            };
+
+            let chain = Promise.resolve();
+            flashMessages.forEach(flash => {
+                chain = chain.then(() => showFlash(flash));
+            });
+        });
+    </script>
+    {% endif %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const langSelect = document.getElementById('lang-select');
+        if (!langSelect) {
+            return;
+        }
+        langSelect.addEventListener('change', function () {
+            const target = this.value;
+            if (target) {
+                window.location.href = target;
+            }
+        });
+    });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateContainer = document.getElementById('site-datetime');
+
+        function pad(value) {
+            return value.toString().padStart(2, '0');
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const day = pad(now.getDate());
+            const month = pad(now.getMonth() + 1);
+            const year = now.getFullYear();
+            const hours = pad(now.getHours());
+            const minutes = pad(now.getMinutes());
+            const seconds = pad(now.getSeconds());
+            if (dateContainer) {
+                dateContainer.textContent = `${day}.${month}.${year} - ${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        updateDate();
+        setInterval(updateDate, 1000);
+    });
+    </script>
+
     <div id="footer">
         {% block footer %}
  <!-- Footer -->
-    <footer class="bg-surface-variant/50 pt-12 sm:pt-16 pb-8">
+    <footer class="bg-surface-variant/50 pt-12 sm:pt-16 pb-8 mt-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">

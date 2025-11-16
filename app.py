@@ -3,6 +3,7 @@ from collections import deque
 from datetime import datetime
 from functools import wraps
 import hashlib
+import hmac
 import os
 import random
 import string
@@ -22,11 +23,190 @@ from flask import (
     url_for,
 )
 from pymongo import MongoClient
-from werkzeug.security import check_password_hash, generate_password_hash
 from cryptography.fernet import Fernet, InvalidToken
 
 
 _identity_cipher: Optional[Fernet] = None
+_SYS_RANDOM = random.SystemRandom()
+_PASSWORD_HASH_CHARS = string.ascii_letters + string.digits
+_PASSWORD_HASH_METHOD = "pbkdf2"
+_PASSWORD_HASH_NAME = "sha256"
+_PASSWORD_DEFAULT_ITERATIONS = 260000
+_PASSWORD_SALT_LENGTH = 16
+
+SUPPORTED_LOCALES = ["tr", "en", "de", "ru", "bg"]
+DEFAULT_LOCALE = "tr"
+LANGUAGE_LABELS = {
+    "tr": "Türkçe",
+    "en": "English",
+    "de": "Deutsch",
+    "ru": "Русский",
+    "bg": "Български",
+}
+_TRANSLATIONS: Dict[str, Dict[str, str]] = {
+    "tr": {
+        "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim!",
+        "help": "Yardım",
+        "contact": "İletişim",
+        "search_placeholder": "Ürün, kategori veya marka ara...",
+        "menu_home": "ANASAYFA",
+        "menu_personal": "KİŞİSEL",
+        "menu_bonus": "PRİM YÖNETİMİ",
+        "menu_contact": "İLETİŞİM",
+        "orders": "Siparişlerim",
+        "cart": "Sepetim",
+        "logout": "Çıkış Yap",
+        "login": "Giriş Yap",
+        "register": "Üye Ol",
+        "alert_success": "Başarılı",
+        "alert_error": "Hata",
+        "alert_warning": "Uyarı",
+        "alert_info": "Bilgi",
+        "alert_default": "Bilgi",
+    },
+    "en": {
+        "promo_text": "🎉 Enjoy 20% off your first order for new customers!",
+        "help": "Help",
+        "contact": "Contact",
+        "search_placeholder": "Search for products, categories, or brands...",
+        "menu_home": "HOME",
+        "menu_personal": "PROFILE",
+        "menu_bonus": "BONUS MANAGEMENT",
+        "menu_contact": "CONTACT",
+        "orders": "My Orders",
+        "cart": "My Cart",
+        "logout": "Log Out",
+        "login": "Sign In",
+        "register": "Register",
+        "alert_success": "Success",
+        "alert_error": "Error",
+        "alert_warning": "Warning",
+        "alert_info": "Info",
+        "alert_default": "Info",
+    },
+    "de": {
+        "promo_text": "🎉 20% Rabatt auf Ihre erste Bestellung für Neukunden!",
+        "help": "Hilfe",
+        "contact": "Kontakt",
+        "search_placeholder": "Produkte, Kategorien oder Marken suchen...",
+        "menu_home": "STARTSEITE",
+        "menu_personal": "PROFIL",
+        "menu_bonus": "BONUSVERWALTUNG",
+        "menu_contact": "KONTAKT",
+        "orders": "Meine Bestellungen",
+        "cart": "Mein Warenkorb",
+        "logout": "Abmelden",
+        "login": "Anmelden",
+        "register": "Registrieren",
+        "alert_success": "Erfolg",
+        "alert_error": "Fehler",
+        "alert_warning": "Warnung",
+        "alert_info": "Info",
+        "alert_default": "Info",
+    },
+    "ru": {
+        "promo_text": "🎉 Скидка 20% на первый заказ для новых клиентов!",
+        "help": "Помощь",
+        "contact": "Контакты",
+        "search_placeholder": "Поиск товаров, категорий или брендов...",
+        "menu_home": "ГЛАВНАЯ",
+        "menu_personal": "ПРОФИЛЬ",
+        "menu_bonus": "УПРАВЛЕНИЕ БОНУСАМИ",
+        "menu_contact": "КОНТАКТЫ",
+        "orders": "Мои заказы",
+        "cart": "Моя корзина",
+        "logout": "Выйти",
+        "login": "Войти",
+        "register": "Создать аккаунт",
+        "alert_success": "Успех",
+        "alert_error": "Ошибка",
+        "alert_warning": "Внимание",
+        "alert_info": "Инфо",
+        "alert_default": "Инфо",
+    },
+    "bg": {
+        "promo_text": "🎉 20% отстъпка за първа поръчка за нови клиенти!",
+        "help": "Помощ",
+        "contact": "Контакт",
+        "search_placeholder": "Търсене на продукти, категории или марки...",
+        "menu_home": "НАЧАЛО",
+        "menu_personal": "ПРОФИЛ",
+        "menu_bonus": "УПРАВЛЕНИЕ НА БОНУСИ",
+        "menu_contact": "КОНТАКТ",
+        "orders": "Моите поръчки",
+        "cart": "Моята кошница",
+        "logout": "Изход",
+        "login": "Вход",
+        "register": "Регистрация",
+        "alert_success": "Успех",
+        "alert_error": "Грешка",
+        "alert_warning": "Предупреждение",
+        "alert_info": "Инфо",
+        "alert_default": "Инфо",
+    },
+}
+
+def _generate_password_salt(length: int = _PASSWORD_SALT_LENGTH) -> str:
+    return "".join(_SYS_RANDOM.choice(_PASSWORD_HASH_CHARS) for _ in range(length))
+
+
+def _pbkdf2_encode(password: str, salt: str, iterations: int, hash_name: str) -> str:
+    digest = hashlib.pbkdf2_hmac(
+        hash_name,
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations,
+    )
+    return base64.b64encode(digest).decode("utf-8")
+
+
+def generate_password_hash(password: str, salt_length: int = _PASSWORD_SALT_LENGTH) -> str:
+    """
+    Generate a PBKDF2 based password hash compatible with Werkzeug's default output.
+    """
+    if not isinstance(password, str):
+        raise TypeError("password must be a string")
+    salt = _generate_password_salt(salt_length)
+    iterations = _PASSWORD_DEFAULT_ITERATIONS
+    hash_name = _PASSWORD_HASH_NAME
+    method = f"{_PASSWORD_HASH_METHOD}:{hash_name}:{iterations}"
+    hash_value = _pbkdf2_encode(password, salt, iterations, hash_name)
+    return f"{method}${salt}${hash_value}"
+
+
+def _parse_method_descriptor(descriptor: str) -> Optional[Tuple[str, int]]:
+    """Return (hash_name, iterations) for pbkdf2 descriptors."""
+    parts = descriptor.split(":")
+    if not parts or parts[0] != _PASSWORD_HASH_METHOD:
+        return None
+    hash_name = parts[1] if len(parts) > 1 else _PASSWORD_HASH_NAME
+    try:
+        iterations = (
+            int(parts[2]) if len(parts) > 2 else _PASSWORD_DEFAULT_ITERATIONS
+        )
+    except ValueError:
+        return None
+    return hash_name, iterations
+
+
+def check_password_hash(pwhash: str, password: str) -> bool:
+    """
+    Validate a password against an encoded PBKDF2 hash.
+    Supports hashes generated by Werkzeug defaults and this module.
+    """
+    if not pwhash or "$" not in pwhash:
+        return False
+    try:
+        descriptor, salt, stored_hash = pwhash.split("$", 2)
+    except ValueError:
+        return False
+
+    parsed = _parse_method_descriptor(descriptor)
+    if not parsed:
+        return False
+    hash_name, iterations = parsed
+    calculated = _pbkdf2_encode(password, salt, iterations, hash_name)
+    return hmac.compare_digest(stored_hash, calculated)
 
 
 def create_app() -> Flask:
@@ -41,6 +221,26 @@ def create_app() -> Flask:
 
     register_db_helpers(app)
     register_routes(app)
+
+    @app.before_request
+    def _load_locale():
+        locale = session.get("lang") or request.accept_languages.best_match(SUPPORTED_LOCALES)
+        g.locale = locale if locale in SUPPORTED_LOCALES else DEFAULT_LOCALE
+
+    def translate(key: str) -> str:
+        locale = getattr(g, "locale", DEFAULT_LOCALE)
+        return _TRANSLATIONS.get(locale, _TRANSLATIONS[DEFAULT_LOCALE]).get(key, key)
+
+    app.jinja_env.globals["t"] = translate
+    app.jinja_env.globals["supported_languages"] = LANGUAGE_LABELS
+
+    @app.route("/set-language/<lang>")
+    def set_language(lang: str):
+        if lang not in LANGUAGE_LABELS:
+            lang = DEFAULT_LOCALE
+        session["lang"] = lang
+        next_url = request.headers.get("Referer") or url_for("index")
+        return redirect(next_url)
 
     return app
 
