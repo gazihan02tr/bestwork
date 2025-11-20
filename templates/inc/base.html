@@ -315,8 +315,11 @@
                         popup: 'swal2-purple-popup',
                         title: 'swal2-purple-title',
                     },
-                    confirmButtonColor: '#7C3AED',
+                    showConfirmButton: false,
                     showCloseButton: true,
+                    timer: 2500,
+                    timerProgressBar: true,
+                    allowOutsideClick: true,
                 });
             };
 
@@ -371,7 +374,7 @@
     <div id="footer">
         {% block footer %}
  <!-- Footer -->
-    <footer class="bg-surface-variant/50 pt-12 sm:pt-16 pb-8 mt-8">
+    <footer class="bg-surface-variant/50 pt-12 sm:pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">

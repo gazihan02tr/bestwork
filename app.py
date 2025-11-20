@@ -7,7 +7,10 @@ import hmac
 import os
 import random
 import string
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote
+from uuid import uuid4
+from werkzeug.utils import secure_filename
 
 from bson import ObjectId
 from flask import (
@@ -43,6 +46,8 @@ LANGUAGE_LABELS = {
     "ru": "Русский",
     "bg": "Български",
 }
+
+ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
         "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim!",
@@ -145,6 +150,117 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "alert_default": "Инфо",
     },
 }
+
+
+def build_initials_avatar(initials: str, size: int = 256) -> str:
+    """
+    Create a data URL with SVG showing the initials on a gradient circle.
+    """
+    initials_text = (initials or "?")[:2]
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}">'
+        f'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+        f'<stop offset="0%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#A855F7"/>'
+        f'</linearGradient></defs>'
+        f'<rect width="{size}" height="{size}" rx="{size//2}" fill="url(#g)"/>'
+        f'<text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" '
+        f'font-family="Roboto,Helvetica,Arial,sans-serif" font-size="{int(size*0.38)}" font-weight="700" fill="#fff">'
+        f'{initials_text}'
+        f'</text></svg>'
+    )
+    return f"data:image/svg+xml;utf8,{quote(svg)}"
+
+
+def generate_initials(name: str, max_letters: int = 2) -> str:
+    """
+    Return up to `max_letters` initials from the supplied name.
+    """
+    if not name:
+        return ""
+    initials: List[str] = []
+    for part in name.strip().split():
+        if not part:
+            continue
+        initials.append(part[0].upper())
+        if len(initials) >= max_letters:
+            break
+    return "".join(initials)
+
+
+def collect_varis_members(user: Dict[str, Any]) -> List[Dict[str, str]]:
+    profile = user.get("profile", {})
+    varis_members: List[Dict[str, str]] = []
+
+    varis_cursor = app.db.users.find(
+        {
+            "placement_parent_id": user["_id"],
+            "placement_status": "placed",
+        },
+        {
+            "profile.first_name": 1,
+            "profile.last_name": 1,
+            "phone": 1,
+            "email": 1,
+            "identity_number_encrypted": 1,
+            "profile.address": 1,
+            "profile.relation": 1,
+        },
+    )
+
+    for doc in varis_cursor:
+        profile_info = doc.get("profile", {})
+        name_parts = [
+            profile_info.get("first_name", "").strip(),
+            profile_info.get("last_name", "").strip(),
+        ]
+        full_name = " ".join(part for part in name_parts if part).strip() or doc.get("email", "Üye")
+        encrypted_tc = doc.get("identity_number_encrypted") or "Belirtilmedi"
+        varis_members.append(
+            {
+                "entry_id": str(doc["_id"]),
+                "source": "placement",
+                "name": full_name,
+                "tc": encrypted_tc,
+                "phone": doc.get("phone") or "Belirtilmedi",
+                "email": doc.get("email") or "Belirtilmedi",
+                "relation": profile_info.get("relation") or "Belirtilmedi",
+                "address": profile_info.get("address") or "Belirtilmedi",
+                "can_manage": False,
+            }
+        )
+
+    manual_varis = profile.get("varis_entries", [])
+    for idx, manual in enumerate(manual_varis):
+        entry_id = manual.get("entry_id") or f"manual-{uuid4().hex}"
+        if not manual.get("entry_id"):
+            app.db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {f"profile.varis_entries.{idx}.entry_id": entry_id}},
+            )
+        varis_members.append(
+            {
+                "entry_id": entry_id,
+                "source": "manual",
+                "name": manual.get("name") or "Tanımlı değil",
+                "tc": manual.get("tc") or "Belirtilmedi",
+                "phone": manual.get("phone") or "Belirtilmedi",
+                "email": manual.get("email") or "Belirtilmedi",
+                "relation": manual.get("relation") or "Belirtilmedi",
+                "address": manual.get("address") or "Belirtilmedi",
+                "can_manage": True,
+            }
+        )
+
+    return varis_members
+
+
+def allowed_avatar_file(filename: str) -> bool:
+    """
+    Check whether a filename has an approved image extension.
+    """
+    if not filename:
+        return False
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_AVATAR_EXTENSIONS
 
 def _generate_password_salt(length: int = _PASSWORD_SALT_LENGTH) -> str:
     return "".join(_SYS_RANDOM.choice(_PASSWORD_HASH_CHARS) for _ in range(length))
@@ -780,6 +896,11 @@ def register_routes(app: Flask) -> None:
 
         title_value = profile.get("title") or profile.get("membership_type", "Girişimci").title()
 
+        stored_avatar = profile.get("avatar_url") or user.get("avatar_url")
+        user_initials = generate_initials(user.get("name", ""))
+        avatar_src = stored_avatar or build_initials_avatar(user_initials)
+
+        varis_members = collect_varis_members(user)
         dashboard_cards = [
             {
                 "title": "Kariyeriniz",
@@ -854,7 +975,178 @@ def register_routes(app: Flask) -> None:
             dashboard_cards=dashboard_cards,
             pending_placements=pending_placements,
             profile=profile,
+            avatar_src=avatar_src,
+            varis_members=varis_members,
         )
+
+    @app.route("/bank-info", methods=["GET", "POST"])
+    @login_required
+    def bank_info():
+        user = g.user
+        profile = user.get("profile", {})
+        bank_info = profile.get("bank_info") or {}
+
+        if request.method == "POST":
+            account_name = request.form.get("account_name", "").strip()
+            bank_name = request.form.get("bank_name", "").strip()
+            iban = request.form.get("iban", "").strip()
+            swift = request.form.get("swift", "").strip()
+
+            if not account_name or not bank_name or not iban:
+                flash("Lütfen zorunlu alanları doldurun.", "warning")
+                return redirect(url_for("bank_info"))
+
+            bank_info = {
+                "account_name": account_name,
+                "bank_name": bank_name,
+                "iban": iban,
+                "swift": swift,
+            }
+
+            app.db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"profile.bank_info": bank_info}},
+            )
+            flash("Banka bilgileriniz güncellendi.", "success")
+            return redirect(url_for("bank_info"))
+
+        return render_template("bank_info.html", bank_info=bank_info)
+
+    @app.route("/varis")
+    @login_required
+    def varis_page():
+        varis_members = collect_varis_members(g.user)
+        return render_template("varis.html", varis_members=varis_members)
+
+    @app.route("/upload-avatar", methods=["POST"])
+    @login_required
+    def upload_avatar():
+        user = g.user
+        file = request.files.get("avatar")
+        if not file or not file.filename:
+            flash("Lütfen bir resim dosyası seçin.", "warning")
+            return redirect(url_for("dashboard"))
+        if not allowed_avatar_file(file.filename):
+            flash("Sadece JPG, PNG, GIF veya WEBP formatları desteklenmektedir.", "error")
+            return redirect(url_for("dashboard"))
+
+        extension = file.filename.rsplit(".", 1)[1].lower()
+        timestamp = int(datetime.utcnow().timestamp())
+        filename = secure_filename(f"{user['_id']}_{timestamp}.{extension}")
+        avatars_dir = os.path.join(app.root_path, "static", "avatars")
+        os.makedirs(avatars_dir, exist_ok=True)
+        filepath = os.path.join(avatars_dir, filename)
+        try:
+            file.save(filepath)
+        except Exception:
+            flash("Profil resmi yüklenirken bir hata oluştu.", "error")
+            return redirect(url_for("dashboard"))
+
+        avatar_url = url_for("static", filename=f"avatars/{filename}")
+        app.db.users.update_one({"_id": user["_id"]}, {"$set": {"profile.avatar_url": avatar_url}})
+        flash("Profil resmi başarıyla yüklendi.", "success")
+        return redirect(url_for("dashboard"))
+
+    @app.route("/change-password", methods=["GET", "POST"])
+    @login_required
+    def change_password():
+        if request.method == "GET":
+            return render_template("change_password_page.html")
+        user = g.user
+        old_password = request.form.get("old_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not old_password or not new_password or not confirm_password:
+            flash("Lütfen tüm alanları doldurun.", "warning")
+            return redirect(url_for("dashboard"))
+
+        if new_password != confirm_password:
+            flash("Yeni şifre ve tekrarı eşleşmiyor.", "error")
+            return redirect(url_for("dashboard"))
+
+        if not check_password_hash(user["password_hash"], old_password):
+            flash("Eski şifre yanlış.", "error")
+            return redirect(url_for("dashboard"))
+
+        if old_password == new_password:
+            flash("Yeni şifre eski şifreden farklı olmalıdır.", "warning")
+            return redirect(url_for("dashboard"))
+
+        new_hash = generate_password_hash(new_password)
+        app.db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": new_hash}})
+        flash("Şifreniz başarıyla güncellendi.", "success")
+        return redirect(url_for("dashboard"))
+
+    @app.route("/save-varis", methods=["POST"])
+    @login_required
+    def save_varis():
+        user = g.user
+        entry_id = request.form.get("entry_id", "").strip()
+        name = request.form.get("name", "").strip()
+        tc = request.form.get("tc", "").strip()
+        phone = request.form.get("phone", "").strip()
+        email = request.form.get("email", "").strip()
+        relation = request.form.get("relation", "").strip()
+        address = request.form.get("address", "").strip()
+
+        if not name or not tc:
+            flash("Ad Soyad ve TC alanları zorunludur.", "warning")
+            return redirect(url_for("dashboard"))
+
+        base_entry = {
+            "name": name,
+            "tc": tc,
+            "phone": phone or "Belirtilmedi",
+            "email": email or "Belirtilmedi",
+            "relation": relation or "Belirtilmedi",
+            "address": address or "Belirtilmedi",
+        }
+
+        if entry_id:
+            existing = app.db.users.find_one(
+                {"_id": user["_id"], "profile.varis_entries.entry_id": entry_id},
+                {"profile.varis_entries.$": 1},
+            )
+            if existing:
+                existing_entry = existing.get("profile", {}).get("varis_entries", [{}])[0]
+                base_entry["entry_id"] = entry_id
+                base_entry["created_at"] = existing_entry.get("created_at", datetime.utcnow())
+                base_entry["updated_at"] = datetime.utcnow()
+                app.db.users.update_one(
+                    {"_id": user["_id"], "profile.varis_entries.entry_id": entry_id},
+                    {"$set": {"profile.varis_entries.$": base_entry}},
+                )
+                flash("Varis bilgisi güncellendi.", "success")
+                return redirect(url_for("dashboard"))
+
+        base_entry["entry_id"] = entry_id or f"manual-{uuid4().hex}"
+        base_entry["created_at"] = datetime.utcnow()
+        app.db.users.update_one(
+            {"_id": user["_id"]},
+            {"$push": {"profile.varis_entries": base_entry}},
+        )
+        flash("Varis bilgisi eklenmiştir.", "success")
+        return redirect(url_for("dashboard"))
+
+    @app.route("/delete-varis", methods=["POST"])
+    @login_required
+    def delete_varis():
+        user = g.user
+        entry_id = request.form.get("entry_id", "").strip()
+        if not entry_id:
+            flash("Silinecek kayıt bulunamadı.", "warning")
+            return redirect(url_for("dashboard"))
+
+        result = app.db.users.update_one(
+            {"_id": user["_id"]},
+            {"$pull": {"profile.varis_entries": {"entry_id": entry_id}}},
+        )
+        if result.modified_count:
+            flash("Varis bilgisi silindi.", "success")
+        else:
+            flash("Kayıt silinemedi.", "error")
+        return redirect(url_for("dashboard"))
 
     @app.route("/login", methods=["GET", "POST"])
     def login():

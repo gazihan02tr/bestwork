@@ -1,0 +1,115 @@
+{% extends "inc/base.html" %}
+
+{% block title %}Banka Bilgilerim{% endblock %}
+
+{% block content %}
+    {% include 'inc/backmenu.html' %}
+<section class="mx-auto max-w-4xl px-4 py-10">
+    <div class=" bg-white rounded-3xl shadow-2xl border border-outline-variant/40 overflow-hidden">
+        <div class="px-6 py-5 border-b border-outline-variant/40 flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-on-surface">Banka Bilgilerim</h2>
+                <p class="text-sm text-on-surface-variant mt-1">Kaydedilmiş banka bilgilerinizi aşağıdan görüntüleyebilirsiniz.</p>
+            </div>
+            <button type="button" data-open-bank-modal class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition">
+                <span class="material-symbols-outlined text-base">account_balance</span>
+                Banka Bilgileri Ekle
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-on-surface-variant">
+                <thead class="text-xs uppercase tracking-[0.2em] bg-surface-variant text-on-surface-variant">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Başlık</th>
+                        <th class="px-4 py-3 text-left">Bilgi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-outline-variant/40">
+                    {% set fields = [
+                        ('Hesap Adı Soyadı', bank_info.account_name),
+                        ('Banka Adı', bank_info.bank_name),
+                        ('IBAN', bank_info.iban),
+                        ('Swift Kodu', bank_info.swift),
+                    ] %}
+                    {% for label, value in fields %}
+                    <tr class="hover:bg-surface/70 transition">
+                        <td class="px-4 py-4 font-semibold text-on-surface">{{ label }}</td>
+                        <td class="px-4 py-4 text-on-surface">
+                            {% if value %}
+                                <span class="{% if label == 'IBAN' %}font-mono{% endif %}">{{ value }}</span>
+                            {% else %}
+                                <span class="text-on-surface-variant">Henüz eklenmedi.</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div id="bank-modal-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden" style="z-index:2147483646;"></div>
+<div id="bank-modal" class="fixed inset-0 flex items-center justify-center px-4 py-6 sm:py-10 hidden" style="z-index:2147483647;">
+    <div class="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-outline-variant/40 overflow-hidden">
+        <div class="px-6 py-4 border-b border-outline-variant/40 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">account_balance</span>
+                Banka Bilgisi Güncelle
+            </h3>
+            <button type="button" id="bank-modal-close" class="p-2 rounded-full text-on-surface hover:bg-outline-variant/40 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="{{ url_for('bank_info') }}" method="post" class="px-6 py-6 space-y-4">
+            <div>
+                <label for="bank-account-name" class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Hesap Adı Soyadı</label>
+                <input id="bank-account-name" name="account_name" type="text" value="{{ bank_info.account_name or '' }}" required class="mt-2 w-full rounded-2xl border border-outline px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition">
+            </div>
+            <div>
+                <label for="bank-name" class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Banka Adı</label>
+                <input id="bank-name" name="bank_name" type="text" value="{{ bank_info.bank_name or '' }}" required class="mt-2 w-full rounded-2xl border border-outline px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition">
+            </div>
+            <div>
+                <label for="bank-iban" class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">IBAN</label>
+                <input id="bank-iban" name="iban" type="text" value="{{ bank_info.iban or '' }}" required class="mt-2 w-full rounded-2xl border border-outline px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition">
+            </div>
+            <div>
+                <label for="bank-swift" class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Swift Kodu (opsiyonel)</label>
+                <input id="bank-swift" name="swift" type="text" value="{{ bank_info.swift or '' }}" class="mt-2 w-full rounded-2xl border border-outline px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" id="bank-modal-cancel" class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:border-primary hover:text-primary transition">İptal</button>
+                <button type="submit" class="px-5 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:elevation-2 transition">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('bank-modal');
+    const backdrop = document.getElementById('bank-modal-backdrop');
+    const openButton = document.querySelector('[data-open-bank-modal]');
+    const closeButton = document.getElementById('bank-modal-close');
+    const cancelButton = document.getElementById('bank-modal-cancel');
+
+    const showModal = () => {
+        modal && modal.classList.remove('hidden');
+        backdrop && backdrop.classList.remove('hidden');
+        backdrop && backdrop.classList.add('flex');
+    };
+
+    const hideModal = () => {
+        modal && modal.classList.add('hidden');
+        backdrop && backdrop.classList.add('hidden');
+        backdrop && backdrop.classList.remove('flex');
+    };
+
+    openButton && openButton.addEventListener('click', showModal);
+    closeButton && closeButton.addEventListener('click', hideModal);
+    cancelButton && cancelButton.addEventListener('click', hideModal);
+    backdrop && backdrop.addEventListener('click', hideModal);
+});
+</script>
+{% endblock %}

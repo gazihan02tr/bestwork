@@ -1,0 +1,259 @@
+{% extends "inc/base.html" %}
+{% block title %}Şifre Değiştir{% endblock %}
+{% block content %}
+    {% include 'inc/backmenu.html' %}
+<section class="bg-[#faf4f2] px-4 py-10">
+    <div class="max-w-6xl mx-auto mt-1 space-y-6">
+        <div class="bg-white rounded-3xl shadow-2xl border border-outline-variant/40 overflow-hidden">
+            <div class="px-6 py-5 border-b border-outline-variant/40 flex flex-wrap items-center gap-4 justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-on-surface">Varis Bilgileri</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Buradaki bilgiler mevcut varis kayıtlarını ve hızlı işlemleri gösterir.</p>
+                </div>
+                <button type="button" data-open-varis-modal class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-on-primary font-semibold text-sm hover:bg-primary/90 transition">
+                    <span class="material-symbols-outlined text-base">person_add</span>
+                    Varis Ekle
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-on-surface-variant">
+                    <thead class="text-xs uppercase tracking-[0.2em] bg-surface-variant text-on-surface-variant">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Ad Soyad</th>
+                            <th class="px-4 py-3 text-left">TC</th>
+                            <th class="px-4 py-3 text-left">Telefon</th>
+                            <th class="px-4 py-3 text-left">E-posta</th>
+                            <th class="px-4 py-3 text-left">Yakınlık</th>
+                            <th class="px-4 py-3 text-left">Adres</th>
+                            <th class="px-4 py-3 text-center">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant/40 bg-white">
+                        {% if varis_members %}
+                        {% for varis in varis_members %}
+                        <tr class="hover:bg-surface/70 transition">
+                            <td class="px-4 py-4 font-semibold text-on-surface">{{ varis.name }}</td>
+                            <td class="px-4 py-4">{{ varis.tc }}</td>
+                            <td class="px-4 py-4">{{ varis.phone or 'Belirtilmedi' }}</td>
+                            <td class="px-4 py-4">{{ varis.email or 'Belirtilmedi' }}</td>
+                            <td class="px-4 py-4">{{ varis.relation or '—' }}</td>
+                            <td class="px-4 py-4 max-w-[180px] break-words">
+                                {% if varis.address and varis.address|length > 21 %}
+                                {{ varis.address[:21] }}…
+                                {% else %}
+                                {{ varis.address or 'Belirtilmedi' }}
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <div class="inline-flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        data-edit-varis
+                                        data-entry-id="{{ varis.entry_id }}"
+                                        data-name="{{ varis.name|e }}"
+                                        data-tc="{{ varis.tc|e }}"
+                                        data-phone="{{ varis.phone|e }}"
+                                        data-email="{{ varis.email|e }}"
+                                        data-relation="{{ varis.relation|e }}"
+                                        data-address="{{ varis.address|e }}"
+                                        class="p-2 rounded-full bg-primary/10 text-primary transition hover:bg-primary/20"
+                                        aria-label="Düzenle"
+                                    >
+                                        <span class="material-symbols-outlined text-base">edit</span>
+                                    </button>
+                                    <form method="post" action="{{ url_for('delete_varis') }}" class="inline-flex">
+                                        <input type="hidden" name="entry_id" value="{{ varis.entry_id }}">
+                                        <button type="submit" class="p-2 rounded-full bg-error/10 text-error transition hover:bg-error/30" aria-label="Sil">
+                                            <span class="material-symbols-outlined text-base">delete</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-6 text-center text-on-surface-variant">Henüz varis bilgisi bulunmamaktadır.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="sm:hidden px-6 py-4 space-y-4">
+                {% if varis_members %}
+                {% for varis in varis_members %}
+                <div class="bg-surface-variant/80 rounded-2xl border border-outline px-4 py-3 space-y-2">
+                    <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                        <span>Ad Soyad</span>
+                        <span>{{ varis.name }}</span>
+                    </div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                        <span>TC</span>
+                        <span>{{ varis.tc }}</span>
+                    </div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                        <span>Telefon</span>
+                        <span>{{ varis.phone or 'Belirtilmedi' }}</span>
+                    </div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                        <span>E-posta</span>
+                        <span>{{ varis.email or 'Belirtilmedi' }}</span>
+                    </div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                        <span>Yakınlık</span>
+                        <span>{{ varis.relation or '—' }}</span>
+                    </div>
+                        <div class="text-xs uppercase tracking-[0.2em] text-on-surface-variant flex justify-between">
+                            <span>Adres</span>
+                            <span class="text-right">
+                                {% if varis.address and varis.address|length > 21 %}
+                                {{ varis.address[:21] }}…
+                                {% else %}
+                                {{ varis.address or 'Belirtilmedi' }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            data-edit-varis
+                            data-entry-id="{{ varis.entry_id }}"
+                            data-name="{{ varis.name|e }}"
+                            data-tc="{{ varis.tc|e }}"
+                            data-phone="{{ varis.phone|e }}"
+                            data-email="{{ varis.email|e }}"
+                            data-relation="{{ varis.relation|e }}"
+                            data-address="{{ varis.address|e }}"
+                            class="w-full text-center px-4 py-2 rounded-full bg-primary/10 text-primary transition hover:bg-primary/20"
+                        >
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                        </button>
+                        <form method="post" action="{{ url_for('delete_varis') }}" class="flex-1">
+                            <input type="hidden" name="entry_id" value="{{ varis.entry_id }}">
+                            <button type="submit" class="w-full px-4 py-2 rounded-full bg-error/10 text-error transition hover:bg-error/30">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="varis-modal-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] hidden"></div>
+<div id="varis-modal" class="fixed inset-0 flex items-center justify-center px-4 z-[201] hidden">
+    <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-outline-variant/40 overflow-hidden">
+        <div class="px-6 py-4 border-b border-outline-variant/40 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">person_add</span>
+                Varis Ekle / Güncelle
+            </h3>
+            <button type="button" id="varis-modal-close" class="p-2 rounded-full text-on-surface hover:bg-outline-variant/40 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="{{ url_for('save_varis') }}" method="post" class="px-6 py-6 space-y-4">
+            <input type="hidden" name="entry_id" id="varis-entry-id" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    Ad Soyad
+                    <input type="text" name="name" required class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    TC
+                    <input type="text" name="tc" required class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    Telefon
+                    <input type="text" name="phone" class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    E-posta
+                    <input type="email" name="email" class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    Yakınlık
+                    <input type="text" name="relation" class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+                <label class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                    Adres
+                    <input type="text" name="address" class="mt-2 w-full rounded-2xl border border-outline px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition">
+                </label>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" id="varis-modal-cancel" class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:border-primary hover:text-primary transition">Kapat</button>
+                <button type="submit" class="px-5 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:elevation-2 transition">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('varis-modal');
+    const backdrop = document.getElementById('varis-modal-backdrop');
+    const openButtons = document.querySelectorAll('[data-open-varis-modal]');
+    const closeButton = document.getElementById('varis-modal-close');
+    const cancelButton = document.getElementById('varis-modal-cancel');
+    const editButtons = document.querySelectorAll('[data-edit-varis]');
+    const varisEntryIdInput = document.getElementById('varis-entry-id');
+    const varisForm = modal ? modal.querySelector('form') : null;
+
+    const fillForm = (data = {}) => {
+        if (!varisForm) {
+            return;
+        }
+        varisEntryIdInput && (varisEntryIdInput.value = data.entryId || '');
+        ['name', 'tc', 'phone', 'email', 'relation', 'address'].forEach(field => {
+            const input = varisForm.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.value = data[field] || '';
+            }
+        });
+    };
+
+    const showModal = () => {
+        modal && modal.classList.remove('hidden');
+        backdrop && backdrop.classList.remove('hidden');
+        backdrop && backdrop.classList.add('flex');
+    };
+
+    const hideModal = () => {
+        modal && modal.classList.add('hidden');
+        backdrop && backdrop.classList.add('hidden');
+        backdrop && backdrop.classList.remove('flex');
+        if (varisForm) {
+            fillForm({});
+        }
+    };
+
+    openButtons.forEach(button => button.addEventListener('click', () => {
+        fillForm({});
+        showModal();
+    }));
+    editButtons.forEach(button => button.addEventListener('click', () => {
+        fillForm({
+            entryId: button.dataset.entryId,
+            name: button.dataset.name,
+            tc: button.dataset.tc,
+            phone: button.dataset.phone,
+            email: button.dataset.email,
+            relation: button.dataset.relation,
+            address: button.dataset.address,
+        });
+        showModal();
+    }));
+    closeButton && closeButton.addEventListener('click', hideModal);
+    cancelButton && cancelButton.addEventListener('click', hideModal);
+    backdrop && backdrop.addEventListener('click', hideModal);
+});
+</script>
+</section>
+{% endblock %}

@@ -1,216 +1,53 @@
 {% extends "inc/base.html" %}
 {% block title %}Yönetim Paneli{% endblock %}
 {% block content %}
-<section class="bg-gradient-to-br from-surface via-surface-variant/40 to-surface pt-0">
-    <div class="w-full relative z-10">
-        <div class="bg-[#f6efff] text-[#2f1b69] border border-[#d8c8ff] shadow-sm mb-8 relative z-20 rounded-none">
-            <nav class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-3 px-5 py-2">
-                <button id="dashboard-mobile-toggle" class="lg:hidden flex items-center gap-2 border border-[#cfc0ff] bg-white/80 text-[#2f1b69] px-4 py-2 font-semibold tracking-[0.1em] uppercase text-sm shadow-sm">
-                    <span class="material-symbols-outlined text-lg">menu</span>
-                    Menü
-                </button>
-                <div id="dashboard-nav-links" class="hidden lg:flex flex-nowrap items-center justify-center gap-5 text-sm font-semibold font-sans" style="font-family: Arial, sans-serif;">
-                    <a href="{{ url_for('index') }}" class="flex items-center gap-2 text-sm font-semibold transition hover:text-primary">
-                        <span class="material-symbols-outlined text-base">home</span>
-                        {{ t("menu_home") }}
-                    </a>
-                    <div class="relative group">
-                        <button type="button" class="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold transition hover:text-primary focus:outline-none">
-                            <span class="material-symbols-outlined text-base">person</span>
-                            {{ t("menu_personal") }}
-                            <span class="material-symbols-outlined text-base">keyboard_arrow_down</span>
-                        </button>
-                        <div class="absolute left-1/2 top-full -translate-x-1/2 mt-2 w-[260px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_16px_50px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                            <div class="flex flex-col text-sm tracking-[0.1em] font-semibold normal-case" style="font-family: Arial, sans-serif;">
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-t-[32px]">
-                                    <span class="material-symbols-outlined text-base">inventory</span>
-                                    Varlık Bilgileri
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">account_balance_wallet</span>
-                                    Banka Bilgilerim
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">badge</span>
-                                    Üyelik Bilgilerim
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">group_add</span>
-                                    Sponsor Olduklarım
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-b-[32px]">
-                                    <span class="material-symbols-outlined text-base">lock</span>
-                                    Şifre Değiştir
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="relative group">
-                        <button type="button" class="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold transition hover:text-primary focus:outline-none">
-                            <span class="material-symbols-outlined text-base">payments</span>
-                            {{ t("menu_bonus") }}
-                            <span class="material-symbols-outlined text-base">keyboard_arrow_down</span>
-                        </button>
-                        <div class="absolute left-1/2 top-full -translate-x-1/2 mt-2 w-[280px] rounded-[32px] bg-white text-[#2f1b69] shadow-[0_16px_50px_rgba(45,0,90,0.25)] border border-[#e4d7ff] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
-                            <div class="flex flex-col text-sm tracking-[0.1em] font-semibold normal-case" style="font-family: Arial, sans-serif;">
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-t-[32px]">
-                                    <span class="material-symbols-outlined text-base">insights</span>
-                                    Prim Detayları
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">rocket_launch</span>
-                                    Hızlı Başlangıç Bonusu
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">attach_money</span>
-                                    Müşteri Kazancı
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">track_changes</span>
-                                    Kariyer Takibi
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">stars</span>
-                                    Referans Bonusu
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">share</span>
-                                    Referans ve Ekip Ağacı
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">compare_arrows</span>
-                                    Binary Hareketleri
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">emoji_events</span>
-                                    Matching Bonusu
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff]">
-                                    <span class="material-symbols-outlined text-base">account_tree</span>
-                                    Binary Ağacı
-                                </a>
-                                <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-[#f0e5ff] rounded-b-[32px]">
-                                    <span class="material-symbols-outlined text-base">person_add</span>
-                                    Yerleşim Bekleyenler
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="#" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold transition hover:text-primary">
-                        <span class="material-symbols-outlined text-base">support_agent</span>
-                        {{ t("menu_contact") }}
-                    </a>
-                </div>
-            </nav>
-            <div id="mobile-dashboard-menu" class="lg:hidden hidden bg-white text-[#2f1b69] border-t border-[#cfc0ff]">
-                <div class="px-4 py-4 space-y-3" style="font-family: Arial, sans-serif;">
-                    <a href="{{ url_for('index') }}" class="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.4em]">
-                        <span class="material-symbols-outlined">home</span>
-                        {{ t("menu_home") }}
-                    </a>
-                    <details class="border border-[#cfc0ff] rounded-[28px] bg-[#f7f2ff]">
-                        <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined">person</span>
-                                {{ t("menu_personal") }}
-                            </div>
-                            <span class="material-symbols-outlined">expand_more</span>
-                        </summary>
-                        <div class="flex flex-col px-3 pb-3 space-y-2">
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">inventory</span>
-                                Varlık Bilgileri
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">account_balance_wallet</span>
-                                Banka Bilgilerim
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">badge</span>
-                                Üyelik Bilgilerim
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">group_add</span>
-                                Sponsor Olduklarım
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">lock</span>
-                                Şifre Değiştir
-                            </a>
-                        </div>
-                    </details>
-                    <details class="border border-[#cfc0ff] rounded-[28px] bg-[#f7f2ff]">
-                        <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined">payments</span>
-                                {{ t("menu_bonus") }}
-                            </div>
-                            <span class="material-symbols-outlined">expand_more</span>
-                        </summary>
-                        <div class="flex flex-col px-3 pb-3 space-y-2 text-sm">
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">insights</span>
-                                Prim Detayları
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">rocket_launch</span>
-                                Hızlı Başlangıç Bonusu
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">attach_money</span>
-                                Müşteri Kazancı
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">track_changes</span>
-                                Kariyer Takibi
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">stars</span>
-                                Referans Bonusu
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">share</span>
-                                Referans ve Ekip Ağacı
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">compare_arrows</span>
-                                Binary Hareketleri
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">emoji_events</span>
-                                Matching Bonusu
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">account_tree</span>
-                                Binary Ağacı
-                            </a>
-                            <a href="#" class="flex items-center gap-3 px-2 py-2 rounded-2xl hover:bg-[#e9d9ff]">
-                                <span class="material-symbols-outlined">person_add</span>
-                                Yerleşim Bekleyenler
-                            </a>
-                        </div>
-                    </details>
-                    <a href="#" class="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.4em]">
-                        <span class="material-symbols-outlined">support_agent</span>
-                        {{ t("menu_contact") }}
-                    </a>
-                </div>
-            </div>
-        </div>
+{% include 'inc/backmenu.html'%}
     </div>
-    <div class="max-w-[85%] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-0">
+    <div class="max-w-[85%] mx-auto mt-7 px-4 sm:px-6 lg:px-8 space-y-8 relative z-0">
         <div class="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-8">
             <aside class="bg-white rounded-3xl shadow-xl border border-outline-variant/40 overflow-hidden">
                 <div class="px-6 py-6 bg-gradient-to-b from-primary/70 to-primary text-white text-center">
-                    <div class="relative w-36 h-36 mx-auto rounded-full overflow-hidden shadow-xl shadow-black/20">
-                        <img src="https://yt3.googleusercontent.com/u5Oi1RfAeng_zg6Qejxpf6DbM0tConjZFkklGDNMkrKW3K2dn62H1XYmjnEeblvfrCvtp8pgXg=s900-c-k-c0x00ffffff-no-rj" alt="Profil" class="w-full h-full object-cover">
+                    <div class="relative w-36 h-36 mx-auto rounded-full overflow-hidden shadow-xl shadow-black/20 bg-white/10 border border-white/40">
+                        <img
+                            src="{{ avatar_src }}"
+                            alt="{{ current_user.name }} profil resmi"
+                            class="w-full h-full object-cover"
+                            loading="lazy"
+                        >
                     </div>
                     <h2 class="mt-4 text-xl font-semibold">{{ current_user.name }}</h2>
-                    <p class="text-xs uppercase tracking-[0.35em] text-white/80 mt-1">Bestwork</p>
-                    <button type="button" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-semibold shadow hover:bg-white/90 transition">
-                        <span class="material-symbols-outlined text-base">photo_camera</span>
-                        Resim Yükle
-                    </button>
+                    <form
+                        id="avatar-upload-form"
+                        action="{{ url_for('upload_avatar') }}"
+                        method="post"
+                        enctype="multipart/form-data"
+                        class="mt-4"
+                    >
+                        <input
+                            id="avatar-input"
+                            name="avatar"
+                            type="file"
+                            accept="image/*"
+                            class="sr-only"
+                        >
+                        <button
+                            type="button"
+                            id="avatar-upload-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-semibold shadow hover:bg-white/90 transition"
+                        >
+                            <span class="material-symbols-outlined text-base">photo_camera</span>
+                            Resim Yükle
+                        </button>
+                        <noscript>
+                            <button
+                                type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-semibold shadow hover:bg-white/90 transition mt-3"
+                            >
+                                <span class="material-symbols-outlined text-base">photo_camera</span>
+                                Resim Yükle
+                            </button>
+                        </noscript>
+                    </form>
                 </div>
                 <div class="px-6 py-6 space-y-6">
                     <div class="space-y-1 text-center">
@@ -237,43 +74,47 @@
             </aside>
 
             <div class="space-y-6">
-                <div class="px-8 py-10 bg-white rounded-3xl shadow-2xl border border-outline-variant/40">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {% for card in dashboard_cards %}
-                        <div
-                            class="relative rounded-2xl p-6 text-white overflow-hidden bg-gradient-to-br {{ card.color }} shadow-lg shadow-black/10 h-full transition transform hover:-translate-y-1 hover:shadow-2xl {% if card.title == 'Yerleşim Bekleyen' %}cursor-pointer{% endif %}"
-                            {% if card.title == 'Yerleşim Bekleyen' %}data-open-placement{% endif %}
-                        >
-                            <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
-                            <div class="flex flex-col h-full justify-between">
-                                <div class="flex items-start justify-between">
-                                    <div>
-                                        <p class="text-xs uppercase tracking-wide text-white/70 mb-2 flex items-center gap-1">
-                                            <span class="material-symbols-outlined text-sm">{{ card.icon }}</span>
-                                            {{ card.title }}
+                <div class="px-8 py-10 bg-white rounded-3xl shadow-2xl">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <div id="dashboard-cards-wrapper" class="relative min-h-0 transition-all duration-300 lg:flex-1" style="transition-property: transform, opacity;">
+                            <div id="cards-view" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {% for card in dashboard_cards %}
+                                <div
+                                    class="relative rounded-2xl p-6 text-white overflow-hidden bg-gradient-to-br {{ card.color }} shadow-lg shadow-black/10 h-full transition transform hover:-translate-y-1 hover:shadow-2xl {% if card.title == 'Yerleşim Bekleyen' %}cursor-pointer{% endif %}"
+                                    {% if card.title == 'Yerleşim Bekleyen' %}data-open-placement{% endif %}
+                                >
+                                    <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
+                                    <div class="flex flex-col h-full justify-between">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <p class="text-xs uppercase tracking-wide text-white/70 mb-2 flex items-center gap-1">
+                                                    <span class="material-symbols-outlined text-sm">{{ card.icon }}</span>
+                                                    {{ card.title }}
+                                                </p>
+                                                <p class="text-3xl font-semibold">{{ card.value }}</p>
+                                                {% if card.subtitle %}
+                                                    <p class="text-xs mt-2 text-white/70">{{ card.subtitle }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <span class="material-symbols-outlined text-4xl text-white/30">{{ card.icon }}</span>
+                                        </div>
+                                        {% if card.title == 'Yerleşim Bekleyen' %}
+                                        <p class="mt-4 text-xs text-white/80">
+                                            {% if pending_placements %}
+                                                Yerleştirmek için tıklayın.
+                                            {% else %}
+                                                Bekleyen üye yok.
+                                            {% endif %}
                                         </p>
-                                        <p class="text-3xl font-semibold">{{ card.value }}</p>
-                                        {% if card.subtitle %}
-                                            <p class="text-xs mt-2 text-white/70">{{ card.subtitle }}</p>
                                         {% endif %}
                                     </div>
-                                    <span class="material-symbols-outlined text-4xl text-white/30">{{ card.icon }}</span>
                                 </div>
-                                {% if card.title == 'Yerleşim Bekleyen' %}
-                                <p class="mt-4 text-xs text-white/80">
-                                    {% if pending_placements %}
-                                        Yerleştirmek için tıklayın.
-                                    {% else %}
-                                        Bekleyen üye yok.
-                                    {% endif %}
-                                </p>
-                                {% endif %}
+                                {% endfor %}
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
-            </div>
+            </div><br>
     </div>
 </section>
 
@@ -328,57 +169,4 @@
 </div>
 {% endif %}
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const modal = document.getElementById('placement-modal');
-    const backdrop = document.getElementById('placement-modal-backdrop');
-    const closeBtn = document.getElementById('placement-modal-close');
-    const openButtons = document.querySelectorAll('[data-open-placement]');
-    const copyBtn = document.getElementById('copy-referral');
-    const referralInput = document.getElementById('referral-link');
-
-    function openModal() {
-        if (!modal || !backdrop) return;
-        modal.classList.remove('hidden');
-        backdrop.classList.remove('hidden');
-    }
-
-    function closeModal() {
-        if (!modal || !backdrop) return;
-        modal.classList.add('hidden');
-        backdrop.classList.add('hidden');
-    }
-
-    openButtons.forEach(btn => btn.addEventListener('click', openModal));
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeModal);
-    }
-    if (backdrop) {
-        backdrop.addEventListener('click', closeModal);
-    }
-
-    const mobileToggle = document.getElementById('dashboard-mobile-toggle');
-    const mobileMenu = document.getElementById('mobile-dashboard-menu');
-
-    if (mobileToggle && mobileMenu) {
-        mobileToggle.addEventListener('click', function () {
-            mobileMenu.classList.toggle('hidden');
-        });
-    }
-
-    if (copyBtn && referralInput) {
-        copyBtn.addEventListener('click', function () {
-            referralInput.select();
-            referralInput.setSelectionRange(0, 99999);
-            try {
-                document.execCommand('copy');
-                copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">check</span>';
-                setTimeout(() => copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">content_copy</span>', 1500);
-            } catch (err) {
-                console.error('Copy failed', err);
-            }
-        });
-    }
-});
-</script>
 {% endblock %}
