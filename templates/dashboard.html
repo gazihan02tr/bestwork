@@ -169,4 +169,24 @@
 </div>
 {% endif %}
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const avatarUploadButton = document.getElementById('avatar-upload-button');
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarUploadForm = document.getElementById('avatar-upload-form');
+
+    if (avatarUploadButton && avatarInput && avatarUploadForm) {
+        avatarUploadButton.addEventListener('click', function () {
+            avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', function () {
+            if (avatarInput.files && avatarInput.files.length) {
+                avatarUploadForm.submit();
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %}
