@@ -562,6 +562,78 @@ def register_routes(app: Flask) -> None:
                 ]
             )
 
+    def format_datetime_for_display(value, fmt="%Y-%m-%d %H:%M"):
+        if not value:
+            return ""
+        if isinstance(value, datetime):
+            return value.strftime(fmt)
+        try:
+            parsed = datetime.fromisoformat(value)
+            return parsed.strftime(fmt)
+        except (ValueError, TypeError):
+            return str(value)
+
+    def collect_sponsor_members(user: Dict[str, Any]) -> List[Dict[str, str]]:
+        members: List[Dict[str, str]] = []
+        sponsor_cursor = app.db.users.find(
+            {"sponsor_id": user["_id"]},
+            {
+                "referral_code": 1,
+                "name": 1,
+                "email": 1,
+                "phone": 1,
+                "created_at": 1,
+                "placement_assigned_at": 1,
+                "profile": 1,
+            },
+        ).sort("created_at", 1)
+
+        for doc in sponsor_cursor:
+            profile_data = doc.get("profile", {}) or {}
+            level = (profile_data.get("level") or profile_data.get("membership_type") or "BRONZ").upper()
+            members.append(
+                {
+                    "member_number": doc.get("referral_code", "Tanımlanmadı"),
+                    "full_name": doc.get("name") or "Üye",
+                    "email": doc.get("email"),
+                    "phone": doc.get("phone"),
+                    "recorded_at": format_datetime_for_display(doc.get("created_at")),
+                    "activated_at": format_datetime_for_display(profile_data.get("activated_at")),
+                    "tree_placed_at": format_datetime_for_display(doc.get("placement_assigned_at")),
+                    "package": level,
+                }
+            )
+        return members
+
+    def collect_faststart_records(user: Dict[str, Any]) -> List[Dict[str, Any]]:
+        profile_data = user.get("profile", {}) or {}
+        raw_records = profile_data.get("fast_start_records") or []
+        format_date = format_datetime_for_display
+
+        records: List[Dict[str, Any]] = []
+        for entry in raw_records:
+            records.append(
+                {
+                    "member_number": entry.get("member_number", "—"),
+                    "full_name": entry.get("full_name", "Üye"),
+                    "package": entry.get("package", "—"),
+                    "bonus": float(entry.get("bonus") or 0),
+                    "purchase_date": format_date(entry.get("purchase_date")),
+                    "main_package_date": format_date(entry.get("main_package_date")),
+                    "earnings": float(entry.get("earnings") or 0),
+                }
+            )
+        return records
+
+    def format_currency(value: float = 0.0, suffix: str = "TL") -> str:
+        try:
+            amount = float(value)
+        except (TypeError, ValueError):
+            amount = 0.0
+        formatted = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"{formatted} {suffix}"
+
+
     @app.route("/")
     def index():
         ensure_sample_products()
@@ -929,6 +1001,7 @@ def register_routes(app: Flask) -> None:
                 "value": sponsor_count,
                 "subtitle": None,
                 "color": "from-sky-700 to-sky-500",
+                "link": url_for("sponsored_page"),
             },
             {
                 "title": "EKİBİM",
@@ -1017,6 +1090,197 @@ def register_routes(app: Flask) -> None:
     def varis_page():
         varis_members = collect_varis_members(g.user)
         return render_template("varis.html", varis_members=varis_members)
+
+    @app.route("/userinfo")
+    @login_required
+    def userinfo():
+        user = g.user
+        profile = user.get("profile", {})
+        referral_code = user.get("referral_code")
+        referral_link = None
+        if referral_code:
+            base_url = request.url_root.rstrip("/")
+            referral_link = f"{base_url}{url_for('register')}?sponsor={referral_code}"
+
+        sponsor_info = None
+        sponsor_id = user.get("sponsor_id")
+        if sponsor_id:
+            sponsor_doc = app.db.users.find_one(
+                {"_id": sponsor_id},
+                {"name": 1, "referral_code": 1, "phone": 1},
+            )
+            if sponsor_doc:
+                sponsor_info = {
+                    "name": sponsor_doc.get("name", "Sponsor"),
+                    "phone": sponsor_doc.get("phone"),
+                    "code": sponsor_doc.get("referral_code"),
+                }
+
+        gender_map = {"erkek": "ERKEK", "kadin": "KADIN"}
+        gender_raw = profile.get("gender", "")
+        gender_display = gender_map.get(gender_raw.lower(), gender_raw.upper() if gender_raw else "Belirtilmedi")
+
+        country_name = next(
+            (c["name"] for c in COUNTRY_OPTIONS if c["dial_code"] == user.get("country_code")),
+            None,
+        )
+        country_label = country_name or profile.get("country") or "Belirtilmedi"
+
+        birth_date_label = None
+        birth_date_raw = profile.get("birth_date")
+        if birth_date_raw:
+            try:
+                birth_date_label = datetime.fromisoformat(birth_date_raw).strftime("%d.%m.%Y")
+            except ValueError:
+                birth_date_label = birth_date_raw
+
+        identity_token = user.get("identity_number_encrypted")
+        identity_number = decrypt_identity_number(identity_token) if identity_token else None
+
+        created_at = user.get("created_at")
+        now = datetime.utcnow()
+        registration_label = "Kayıt tarihi bilgisi yok."
+        if created_at:
+            days_registered = max(0, (now.date() - created_at.date()).days)
+            registration_label = (
+                f"{created_at.strftime('%d.%m.%Y')} ({days_registered} gündür sisteme kayıtlısınız)"
+            )
+
+        membership_level_raw = profile.get("level") or profile.get("membership_type") or "Bireysel"
+        membership_level_display = membership_level_raw.upper()
+
+        full_name = user.get("name") or f"{profile.get('first_name', '')} {profile.get('last_name', '')}".strip() or "Üye"
+
+        sponsor_members = collect_sponsor_members(user)
+
+        return render_template(
+            "userinfo.html",
+            full_name=full_name,
+            identity_number=identity_number,
+            email=user.get("email"),
+            birth_date=birth_date_label,
+            gender=gender_display,
+            country=country_label,
+            city=profile.get("city"),
+            district=profile.get("district"),
+            neighborhood=profile.get("neighborhood"),
+            address=profile.get("address"),
+            membership_level=membership_level_display,
+            registration_label=registration_label,
+            member_number=referral_code or "Tanımlanmadı",
+            referral_link=referral_link,
+            sponsor_info=sponsor_info,
+            phone=user.get("phone"),
+            sponsor_members=sponsor_members,
+        )
+
+    @app.route("/prim-info")
+    @login_required
+    def prim_info():
+        user = g.user
+        profile = user.get("profile", {})
+        months = [
+            "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+        ]
+        current_year = datetime.utcnow().year
+        created_at = user.get("created_at")
+        reg_year = None
+        reg_month = None
+        if isinstance(created_at, datetime):
+            reg_year = created_at.year
+            reg_month = created_at.month
+        elif isinstance(created_at, str):
+            try:
+                parsed = datetime.fromisoformat(created_at)
+                reg_year = parsed.year
+                reg_month = parsed.month
+            except ValueError:
+                pass
+
+        earliest_year = reg_year or current_year
+        year_options = list(range(current_year, earliest_year - 1, -1))
+
+        default_year = str(reg_year if reg_year else current_year)
+        selected_year = request.args.get("year", default_year)
+
+        try:
+            selected_year_int = int(selected_year)
+        except (TypeError, ValueError):
+            selected_year_int = current_year
+
+        if selected_year_int > current_year:
+            selected_year_int = current_year
+        if selected_year_int < earliest_year:
+            selected_year_int = earliest_year
+
+        month_options = months
+        if not reg_month:
+            reg_month = 1
+        if selected_year_int == reg_year and reg_month:
+            default_month = months[reg_month - 1]
+        elif selected_year_int == current_year:
+            default_month = months[datetime.utcnow().month - 1]
+        else:
+            default_month = months[0]
+
+        selected_month = request.args.get("month", default_month)
+        if selected_month not in month_options:
+            selected_month = default_month
+
+        bonus_rows = [
+            ("Satış Karı", profile.get("sales_profit", 0)),
+            ("Referans Bonusu", profile.get("referal_bonus", 0)),
+            ("Hızlı Başlangıç", profile.get("fast_start", 0)),
+            ("Eşleşme Primi", profile.get("matching_bonus", 0)),
+            ("Matching Bonusu", profile.get("matching_bonus_v2", 0)),
+        ]
+
+        monthly_total = sum(value for _, value in bonus_rows)
+        tax_rate = 0.2
+        tax_amount = monthly_total * tax_rate
+        credited_total = monthly_total - tax_amount
+
+        bonus_summary = [
+            ("Prim Tutarı", monthly_total),
+            ("Gelir Vergisi(%20)", tax_amount),
+        ]
+
+        return render_template(
+            "priminfo.html",
+            months=months,
+            year_options=year_options,
+            selected_month=selected_month,
+            selected_year=selected_year,
+            bonus_rows=bonus_rows,
+            monthly_total=monthly_total,
+            bonus_summary=bonus_summary,
+            credited_total=credited_total,
+            format_currency=format_currency,
+        )
+
+    @app.route("/sponsored")
+    @login_required
+    def sponsored_page():
+        user = g.user
+        sponsor_members = collect_sponsor_members(user)
+        return render_template(
+            "sponsored.html",
+            sponsor_members=sponsor_members,
+        )
+
+    @app.route("/faststart")
+    @login_required
+    def faststart_page():
+        user = g.user
+        records = collect_faststart_records(user)
+        total_bonus = sum(record["bonus"] for record in records)
+        return render_template(
+            "faststart.html",
+            records=records,
+            total_bonus=total_bonus,
+            format_currency=format_currency,
+        )
 
     @app.route("/upload-avatar", methods=["POST"])
     @login_required

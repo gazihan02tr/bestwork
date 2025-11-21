@@ -1,0 +1,198 @@
+{% extends "inc/base.html" %}
+{% block title %}Üyelik Bilgilerim{% endblock %}
+{% block content %}
+{% include 'inc/backmenu.html' %}
+<div class="max-w-6xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[#4c1d95] text-white px-6 sm:px-10 py-10 shadow-[0_25px_120px_rgba(0,0,0,0.35)]">
+        <div class="relative z-10 space-y-2">
+            <p class="text-xs uppercase tracking-[0.5em] text-white/70">ÜYELİK BİLGİLERİ</p>
+            <h1 class="text-3xl sm:text-4xl font-semibold">{{ full_name }}</h1>
+            <p class="text-sm text-white/80">Üye Numarası: <span class="font-semibold">{{ member_number }}</span></p>
+        </div>
+                <div class="relative z-10 mt-6 grid gap-4 sm:grid-cols-3">
+                <div class="rounded-2xl bg-white/15 p-4 backdrop-blur-sm">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.4em] text-white/70">ÜYELİK SEVİYESİ</p>
+                <p class="mt-2 text-xl font-semibold leading-tight">{{ membership_level }}</p>
+            </div>
+                <div class="rounded-2xl bg-white/15 p-4 backdrop-blur-sm">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.4em] text-white/70">KAYIT TARİHİ</p>
+                    <p class="mt-2 text-xl font-semibold leading-tight">{{ registration_label }}</p>
+                </div>
+                <div class="rounded-2xl bg-white/15 p-4 backdrop-blur-sm">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.4em] text-white/70">CİNSİYET</p>
+                <p class="mt-2 text-xl font-semibold leading-tight">{{ gender }}</p>
+            </div>
+        </div>
+        <div class="relative z-10 mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-[0.3em] text-white/70">
+            {% if sponsor_info %}
+            <span class="flex items-center gap-2 rounded-full bg-white/15 px-4 py-2">
+                <span class="material-symbols-outlined text-base">person</span>
+                SPONSOR BİLGİSİ MEVCUT
+            </span>
+            {% endif %}
+            {% if referral_link %}
+        
+            {% endif %}
+        </div>
+        <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.4),_transparent_60%)] pointer-events-none"></div>
+    </section>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        <article class="rounded-3xl border border-outline-variant bg-white p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-on-surface">Temel Bilgiler</h2>
+                <span class="text-xs uppercase tracking-[0.3em] text-on-surface-variant">PROFİL</span>
+            </div>
+            <dl class="mt-6 space-y-4">
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Ad Soyad</dt>
+                    <dd class="font-semibold text-on-surface">{{ full_name }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">TC</dt>
+                    <dd class="font-semibold text-on-surface">{{ identity_number or 'Gizli' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">E-posta</dt>
+                    <dd class="font-semibold text-on-surface">{{ email or 'Belirtilmedi' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Doğum Tarihi</dt>
+                    <dd class="font-semibold text-on-surface">{{ birth_date or 'Belirtilmedi' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Cinsiyet</dt>
+                    <dd class="font-semibold text-on-surface">{{ gender }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Cep Telefonu</dt>
+                    <dd class="font-semibold text-on-surface">{{ phone or 'Belirtilmedi' }}</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="rounded-3xl border border-outline-variant bg-white p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-on-surface">Adres Bilgileri</h2>
+                <span class="text-xs uppercase tracking-[0.3em] text-on-surface-variant">İKAMET</span>
+            </div>
+            <dl class="mt-6 space-y-4">
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Ülke</dt>
+                    <dd class="font-semibold text-on-surface">{{ country or 'Belirtilmedi' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Şehir</dt>
+                    <dd class="font-semibold text-on-surface">{{ city or 'Belirtilmedi' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">İlçe</dt>
+                    <dd class="font-semibold text-on-surface">{{ district or 'Belirtilmedi' }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Mahalle</dt>
+                    <dd class="font-semibold text-on-surface">{{ neighborhood or '-' }}</dd>
+                </div>
+                <div class="flex flex-col gap-1 text-sm">
+                    <dt class="text-on-surface-variant">Adres</dt>
+                    <dd class="font-semibold text-on-surface">{{ address or 'Belirtilmedi' }}</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="lg:col-span-2 rounded-3xl border border-outline-variant bg-white p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-on-surface">Üyelik ve Sponsor</h2>
+                <span class="text-xs uppercase tracking-[0.3em] text-on-surface-variant">DETAY</span>
+            </div>
+            <dl class="mt-6 grid gap-4 md:grid-cols-2">
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Üyelik Seviyesi</dt>
+                    <dd class="font-semibold text-on-surface">{{ membership_level }}</dd>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <dt class="text-on-surface-variant">Üye Numarası</dt>
+                    <dd class="font-semibold text-on-surface">{{ member_number }}</dd>
+                </div>
+                <div class="flex justify-between text-sm md:col-span-2">
+                    <dt class="text-on-surface-variant">Kayıt Tarihiniz</dt>
+                    <dd class="font-semibold text-on-surface">{{ registration_label }}</dd>
+                </div>
+                <div class="flex justify-between text-sm md:col-span-2">
+                    <dt class="text-on-surface-variant">Sponsor Üyeniz</dt>
+                    <dd class="text-right text-sm">
+                        {% if sponsor_info %}
+                            <span class="font-semibold text-on-surface">{{ sponsor_info.name }}</span>
+                            {% if sponsor_info.phone or sponsor_info.code %}
+                                <span class="block text-xs text-on-surface-variant">
+                                    {% if sponsor_info.phone %}{{ sponsor_info.phone }}{% endif %}
+                                    {% if sponsor_info.code %}{% if sponsor_info.phone %} • {% endif %}{{ sponsor_info.code }}{% endif %}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="font-semibold text-on-surface-variant">Sponsor bilgisi yok</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+            <div class="mt-6 space-y-3">
+                <label class="text-xs font-semibold uppercase tracking-[0.3em] text-on-surface-variant">KAZANDIRAN LİNK (ÜYE KAYDI)</label>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                    <input
+                        id="userinfo-referral-link"
+                        type="text"
+                        readonly
+                        value="{{ referral_link or '' }}"
+                        class="flex-1 rounded-2xl border border-outline focus:border-primary focus:ring-2 focus:ring-primary/40 px-4 py-3 text-sm font-semibold text-on-surface bg-surface"
+                        placeholder="Link oluşturulmamış"
+                    >
+                    <button
+                        id="copy-user-referral"
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary shadow hover:elevation-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition"
+                        aria-label="Referans linkini kopyala"
+                    >
+                        <span class="material-symbols-outlined text-base">content_copy</span>
+                        <span>Kopyala</span>
+                    </button>
+                </div>
+                {% if not referral_link %}
+                <p class="text-xs text-on-surface-variant">Referans linkiniz henüz oluşturulmadı.</p>
+                {% endif %}
+            </div>
+        </article>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const copyBtn = document.getElementById("copy-user-referral");
+    const referralInput = document.getElementById("userinfo-referral-link");
+    if (!(copyBtn && referralInput)) return;
+
+    copyBtn.addEventListener("click", function () {
+        const value = referralInput.value;
+        if (!value) return;
+        const originalContent = copyBtn.innerHTML;
+
+        const markSuccess = () => {
+            copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">check</span><span>Tamam</span>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalContent;
+            }, 1400);
+        };
+
+        referralInput.select();
+        referralInput.setSelectionRange(0, 99999);
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(markSuccess).catch(markSuccess);
+            return;
+        }
+
+        document.execCommand("copy");
+        markSuccess();
+    });
+});
+</script>
+{% endblock %}

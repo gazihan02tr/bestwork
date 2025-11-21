@@ -79,9 +79,11 @@
                         <div id="dashboard-cards-wrapper" class="relative min-h-0 transition-all duration-300 lg:flex-1" style="transition-property: transform, opacity;">
                             <div id="cards-view" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {% for card in dashboard_cards %}
+                                {% set card_link = card.link %}
                                 <div
-                                    class="relative rounded-2xl p-6 text-white overflow-hidden bg-gradient-to-br {{ card.color }} shadow-lg shadow-black/10 h-full transition transform hover:-translate-y-1 hover:shadow-2xl {% if card.title == 'Yerleşim Bekleyen' %}cursor-pointer{% endif %}"
+                                    class="relative rounded-2xl p-6 text-white overflow-hidden bg-gradient-to-br {{ card.color }} shadow-lg shadow-black/10 h-full transition transform hover:-translate-y-1 hover:shadow-2xl {% if card_link or card.title == 'Yerleşim Bekleyen' %}cursor-pointer{% endif %}"
                                     {% if card.title == 'Yerleşim Bekleyen' %}data-open-placement{% endif %}
+                                    {% if card_link %}onclick="window.location='{{ card_link }}';" role="link" tabindex="0"{% endif %}
                                 >
                                     <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
                                     <div class="flex flex-col h-full justify-between">

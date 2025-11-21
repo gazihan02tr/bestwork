@@ -1,0 +1,102 @@
+{% extends "inc/base.html" %}
+{% block title %}Sponsor Olduklarım{% endblock %}
+{% block content %}
+{% include 'inc/backmenu.html' %}
+<div class="w-full mx-auto mt-10 px-4 sm:px-6 lg:px-8 pb-12 space-y-6">
+    <section class="flex flex-col gap-3 rounded-[28px] border border-outline bg-white/80 p-6 shadow-2xl shadow-slate-900/10">
+        <div class="flex flex-col gap-1">
+            <p class="text-xs uppercase tracking-[0.4em] text-on-surface-variant">Sponsor Olduklarım</p>
+            <h1 class="text-3xl font-semibold text-on-surface">Üyeler</h1>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-outline/60 bg-slate-50/40 p-4">
+            <div class="flex items-center gap-3">
+                <label class="text-xs font-semibold uppercase tracking-[0.3em] text-on-surface-variant">Sayfada</label>
+                <select class="rounded-xl border border-outline/60 bg-white px-3 py-2 text-sm font-semibold text-on-surface shadow-sm focus:border-primary focus:ring-1 focus:ring-primary/40">
+                    <option>25</option>
+                    <option selected>50</option>
+                    <option>100</option>
+                </select>
+                <span class="text-sm font-semibold text-on-surface-variant">Kayıt Göster</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <label class="text-xs font-semibold uppercase tracking-[0.3em] text-on-surface-variant">Bul</label>
+                <div class="flex items-center gap-2 rounded-xl border border-outline/60 bg-white px-3 py-1 shadow-sm">
+                    <span class="material-symbols-outlined text-lg text-on-surface-variant">search</span>
+                    <input
+                        type="search"
+                        placeholder="Üye No, Adı veya GSM"
+                        class="w-40 border-none bg-transparent text-sm font-semibold text-on-surface focus:outline-none"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="overflow-hidden rounded-[32px] border border-outline bg-white shadow-[0_25px_80px_rgba(15,23,42,0.12)]">
+                <div class="flex flex-col gap-1 border-b border-outline/60 bg-gradient-to-r from-white via-slate-50 to-white px-6 py-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-on-surface">Toplam {{ sponsor_members|length }} Üye</h2>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-on-surface-variant">
+                        <span class="text-on-surface">Önceki</span>
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-on-primary">1</span>
+                        <span class="text-on-surface">Sonraki</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm">
+                        <thead class="bg-slate-50">
+                            <tr class="text-[11px] uppercase tracking-[0.3em] text-on-surface-variant">
+                                <th class="px-5 py-3">Üye No</th>
+                                <th class="px-5 py-3">Adı Soyadı</th>
+                                <th class="px-5 py-3">E-posta</th>
+                                <th class="px-5 py-3">GSM</th>
+                                <th class="px-5 py-3">Kayıt Tarihi</th>
+                                <th class="px-5 py-3">Aktiflik Tarihi</th>
+                                <th class="px-5 py-3">Ağaca Yerleşme Tarihi</th>
+                                <th class="px-5 py-3">Paket</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in sponsor_members %}
+                            <tr class="border-b border-outline/30 bg-white transition hover:bg-primary/5">
+                                <td class="whitespace-nowrap px-5 py-4 font-semibold text-sm">{{ member.member_number }}</td>
+                                <td class="px-5 py-4">{{ member.full_name }}</td>
+                                <td class="px-5 py-4">{{ member.email or '—' }}</td>
+                                <td class="px-5 py-4">{{ member.phone or '—' }}</td>
+                                <td class="px-5 py-4">{{ member.recorded_at or '—' }}</td>
+                                <td class="px-5 py-4">{{ member.activated_at or '—' }}</td>
+                                <td class="px-5 py-4">{{ member.tree_placed_at or '—' }}</td>
+                                <td class="px-5 py-4 font-semibold">{{ member.package }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-6 text-center text-sm text-on-surface-variant">
+                                    Sponsor olduğunuz üye bulunamadı.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-3 border-t border-outline pt-4 text-[11px] uppercase tracking-[0.3em] text-on-surface-variant md:flex-row md:items-center md:justify-between">
+            {% set total = sponsor_members|length %}
+            <p>
+                {% if total > 0 %}
+                    {{ total }} Kayıttan 1 - {{ total }} Arası Kayıtlar
+                {% else %}
+                    0 Kayıttan 0 Arası Kayıtlar
+                {% endif %}
+            </p>
+            <div class="flex gap-2">
+                <button class="rounded-full border border-outline/70 px-4 py-1.5 font-semibold text-on-surface hover:border-primary transition">Önceki</button>
+                <span class="flex h-8 w-8 items-center justify-center rounded-full border border-outline/70 font-semibold text-on-surface">1</span>
+                <button class="rounded-full border border-outline/70 px-4 py-1.5 font-semibold text-on-surface hover:border-primary transition">Sonraki</button>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
