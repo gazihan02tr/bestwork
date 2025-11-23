@@ -1,0 +1,142 @@
+{% extends "inc/base.html" %}
+{% block title %}Referans ve Ekip Ağacı{% endblock %}
+{% block content %}
+{% include "inc/backmenu.html" %}
+<div class="max-w-6xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 pb-12">
+    <section class="rounded-[28px] border border-outline-variant bg-white shadow-[0_20px_80px_rgba(15,23,42,0.12)]">
+        <div class="rounded-t-[28px] border-b border-outline-variant/70 bg-slate-100 px-6 py-5">
+            <form id="referans-team-filters" method="get" class="flex flex-wrap items-center gap-3 text-sm font-semibold text-on-surface">
+                <button type="button" data-direction="prev" class="rounded-full border border-outline px-4 py-2 text-[12px] text-on-surface/80 hover:border-primary transition">
+                    ‹‹
+                </button>
+                <label class="flex flex-col gap-1 text-[11px] tracking-[0.12em] text-on-surface-variant">
+                    Ay
+                    <select name="month" class="rounded-2xl border border-outline/70 bg-white px-4 py-2 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/40">
+                        {% for month in months %}
+                        <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="flex flex-col gap-1 text-[11px] tracking-[0.12em] text-on-surface-variant">
+                    Yıl
+                    <select name="year" class="rounded-2xl border border-outline/70 bg-white px-4 py-2 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/40">
+                        {% for year in year_options %}
+                        <option value="{{ year }}" {% if year|string == selected_year|string %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="button" data-direction="next" class="rounded-full border border-outline px-4 py-2 text-[12px] text-on-surface/80 hover:border-primary transition">
+                    ››
+                </button>
+                <button type="submit" class="rounded-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-6 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-white shadow-lg shadow-green-500/30 transition hover:opacity-90 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xs">refresh</span>
+                    Yenile
+                </button>
+                <a href="{{ url_for('referans_bonus_page') }}" class="rounded-[16px] bg-[#0ea5e9] px-6 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition hover:opacity-90 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xs">list</span>
+                    Liste Görünümü
+                </a>
+                <div class="ml-auto min-w-[200px]">
+                    <label class="sr-only" for="referans-team-search">Üye Ara</label>
+                    <input
+                        id="referans-team-search"
+                        name="member"
+                        value="{{ search_query }}"
+                        placeholder="Üye No veya Ad Soyad"
+                        type="search"
+                        class="w-full rounded-[16px] border border-outline/70 bg-white px-4 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/40"
+                    />
+                </div>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-b border-outline/70 bg-slate-50 px-6 py-6 text-sm font-semibold uppercase tracking-[0.2em] text-on-surface">
+            {% for legend in status_legends %}
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center h-12 w-12 rounded-full text-white {{ legend.color }}">
+                    <span class="material-symbols-outlined text-lg">{{ legend.icon }}</span>
+                </span>
+                <div class="text-[11px] tracking-[0.25em] text-on-surface-variant">
+                    {{ legend.label }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-[0.3em] text-on-surface-variant">
+                    <tr>
+                        <th class="px-5 py-3"></th>
+                        <th class="px-5 py-3">Adı Soyadı</th>
+                        <th class="px-5 py-3 text-right">TOPLAM ÜYE</th>
+                        <th class="px-5 py-3 text-right">Kişisel Puan</th>
+                        <th class="px-5 py-3 text-right">Ekip Puan</th>
+                        <th class="px-5 py-3 text-right">TOPLAM PUAN</th>
+                        <th class="px-5 py-3 text-right">Not</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr class="border-b border-outline/60 bg-white transition hover:bg-slate-50">
+                        <td class="px-5 py-4">
+                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-outline/50 {{ record.status_color }}">
+                                <span class="material-symbols-outlined text-base text-white">{{ record.status_icon }}</span>
+                            </span>
+                        </td>
+                        <td class="px-5 py-4 font-semibold flex flex-col gap-1">
+                            <span class="text-sm">{{ record.member_number }}</span>
+                            <span class="text-xs text-on-surface-variant">{{ record.full_name }}</span>
+                        </td>
+                        <td class="px-5 py-4 text-right font-semibold">{{ record.total_members }}</td>
+                        <td class="px-5 py-4 text-right font-semibold text-slate-800">{{ format_points(record.personal_points) }}</td>
+                        <td class="px-5 py-4 text-right font-semibold text-slate-800">{{ format_points(record.team_points) }}</td>
+                        <td class="px-5 py-4 text-right font-semibold text-slate-800">{{ format_points(record.total_points) }}</td>
+                        <td class="px-5 py-4 text-right">
+                            <a href="{{ url_for('referans_bonus_page') }}" class="text-sm font-semibold text-primary hover:underline">Not Ekle</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-6 text-center text-sm text-on-surface-variant">
+                            Henüz referans ağacınızda kayıtlı üye bulunamadı.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-t border-outline text-xs font-semibold uppercase tracking-[0.25em] text-on-surface-variant">
+            <span>Toplam {{ records|length }} Üye</span>
+            <span class="text-on-surface-variant">Gösterilen kayıtlar {{ records|length }} / {{ records|length }}</span>
+        </div>
+    </section>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const filterForm = document.getElementById("referans-team-filters");
+    if (!filterForm) return;
+    const monthSelect = filterForm.querySelector('select[name="month"]');
+    const months = monthSelect ? Array.from(monthSelect.options).map((option) => option.value) : [];
+
+    const changeMonth = (direction) => {
+        if (!monthSelect || months.length === 0) return;
+        const currentIndex = months.indexOf(monthSelect.value);
+        if (currentIndex === -1) return;
+        const nextIndex = Math.max(0, Math.min(months.length - 1, currentIndex + direction));
+        if (nextIndex === currentIndex) return;
+        monthSelect.value = months[nextIndex];
+        filterForm.submit();
+    };
+
+    filterForm.querySelectorAll("button[data-direction]").forEach((button) => {
+        const direction = button.dataset.direction === "next" ? 1 : -1;
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            changeMonth(direction);
+        });
+    });
+});
+</script>
+{% endblock %}

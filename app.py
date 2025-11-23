@@ -573,6 +573,16 @@ def register_routes(app: Flask) -> None:
         except (ValueError, TypeError):
             return str(value)
 
+    def parse_datetime(value):
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except (ValueError, TypeError):
+                return None
+        return None
+
     def collect_sponsor_members(user: Dict[str, Any]) -> List[Dict[str, str]]:
         members: List[Dict[str, str]] = []
         sponsor_cursor = app.db.users.find(
@@ -625,7 +635,50 @@ def register_routes(app: Flask) -> None:
             )
         return records
 
+    def collect_referral_bonus_records(user: Dict[str, Any]) -> List[Dict[str, Any]]:
+        profile_data = user.get("profile", {}) or {}
+        raw_records = profile_data.get("referal_bonus_records") or []
+        records: List[Dict[str, Any]] = []
+
+        for entry in raw_records:
+            raw_date = (
+                entry.get("date")
+                or entry.get("recorded_at")
+                or entry.get("created_at")
+                or entry.get("earned_at")
+            )
+            parsed_date = parse_datetime(raw_date)
+            display_date = format_datetime_for_display(parsed_date or raw_date)
+
+            raw_amount = entry.get("amount") or entry.get("bonus") or entry.get("value") or 0
+            try:
+                amount = float(raw_amount)
+            except (TypeError, ValueError):
+                amount = 0.0
+
+            records.append(
+                {
+                    "member_number": entry.get("member_number")
+                    or entry.get("referral_code")
+                    or "Tanımlanmadı",
+                    "full_name": entry.get("full_name") or entry.get("name") or "Üye",
+                    "date": display_date,
+                    "parsed_date": parsed_date,
+                    "amount": amount,
+                    "source": entry.get("source") or entry.get("package"),
+                }
+            )
+        return records
+
     def format_currency(value: float = 0.0, suffix: str = "TL") -> str:
+        try:
+            amount = float(value)
+        except (TypeError, ValueError):
+            amount = 0.0
+        formatted = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"{formatted} {suffix}"
+
+    def format_points(value: float = 0.0, suffix: str = "PV") -> str:
         try:
             amount = float(value)
         except (TypeError, ValueError):
@@ -1280,6 +1333,204 @@ def register_routes(app: Flask) -> None:
             records=records,
             total_bonus=total_bonus,
             format_currency=format_currency,
+        )
+
+    @app.route("/referans-bonusu")
+    @login_required
+    def referans_bonus_page():
+        user = g.user
+        records = collect_referral_bonus_records(user)
+        months = [
+            "Ocak",
+            "Şubat",
+            "Mart",
+            "Nisan",
+            "Mayıs",
+            "Haziran",
+            "Temmuz",
+            "Ağustos",
+            "Eylül",
+            "Ekim",
+            "Kasım",
+            "Aralık",
+        ]
+        current_year = datetime.utcnow().year
+        created_at = user.get("created_at")
+        created_year = None
+        if isinstance(created_at, datetime):
+            created_year = created_at.year
+        elif isinstance(created_at, str):
+            try:
+                created_year = datetime.fromisoformat(created_at).year
+            except ValueError:
+                pass
+
+        earliest_year = created_year or current_year
+        if earliest_year > current_year:
+            earliest_year = current_year
+
+        year_options = list(range(current_year, earliest_year - 1, -1))
+        if not year_options:
+            year_options = [current_year]
+
+        default_year = str(current_year)
+        selected_year = request.args.get("year", default_year)
+        try:
+            selected_year_int = int(selected_year)
+        except (TypeError, ValueError):
+            selected_year_int = current_year
+
+        if selected_year_int > current_year:
+            selected_year_int = current_year
+        if selected_year_int < earliest_year:
+            selected_year_int = earliest_year
+
+        default_month = months[datetime.utcnow().month - 1]
+        selected_month = request.args.get("month", default_month)
+        if selected_month not in months:
+            selected_month = default_month
+
+        search_query = request.args.get("member", "").strip()
+        search_lower = search_query.lower()
+
+        records.sort(
+            key=lambda entry: entry.get("parsed_date") or datetime.min, reverse=True
+        )
+
+        filtered_records = []
+        for record in records:
+            parsed_date = record.get("parsed_date")
+            month_name = months[parsed_date.month - 1] if parsed_date else None
+            year_value = parsed_date.year if parsed_date else None
+
+            if month_name and month_name != selected_month:
+                continue
+            if year_value and year_value != selected_year_int:
+                continue
+
+            if search_lower:
+                member = record.get("member_number", "").lower()
+                full_name = record.get("full_name", "").lower()
+                if search_lower not in member and search_lower not in full_name:
+                    continue
+
+            filtered_records.append(record)
+
+        total_amount = sum(record["amount"] for record in filtered_records)
+
+        return render_template(
+            "bonref.html",
+            months=months,
+            year_options=year_options,
+            selected_month=selected_month,
+            selected_year=selected_year,
+            records=filtered_records,
+            total_amount=total_amount,
+            search_query=search_query,
+            format_currency=format_currency,
+        )
+
+    @app.route("/referans-ekip")
+    @login_required
+    def referans_team_page():
+        user = g.user
+        sponsor_members = collect_sponsor_members(user)
+        months = [
+            "Ocak",
+            "Şubat",
+            "Mart",
+            "Nisan",
+            "Mayıs",
+            "Haziran",
+            "Temmuz",
+            "Ağustos",
+            "Eylül",
+            "Ekim",
+            "Kasım",
+            "Aralık",
+        ]
+        current_year = datetime.utcnow().year
+        created_at = user.get("created_at")
+        created_year = None
+        if isinstance(created_at, datetime):
+            created_year = created_at.year
+        elif isinstance(created_at, str):
+            try:
+                created_year = datetime.fromisoformat(created_at).year
+            except ValueError:
+                pass
+        earliest_year = created_year or current_year
+        if earliest_year > current_year:
+            earliest_year = current_year
+        year_options = list(range(current_year, earliest_year - 1, -1))
+        if not year_options:
+            year_options = [current_year]
+
+        selected_year = request.args.get("year", str(current_year))
+        try:
+            selected_year_int = int(selected_year)
+        except (TypeError, ValueError):
+            selected_year_int = current_year
+
+        if selected_year_int > current_year:
+            selected_year_int = current_year
+        if selected_year_int < earliest_year:
+            selected_year_int = earliest_year
+
+        default_month = months[datetime.utcnow().month - 1]
+        selected_month = request.args.get("month", default_month)
+        if selected_month not in months:
+            selected_month = default_month
+
+        search_query = request.args.get("member", "").strip()
+        search_lower = search_query.lower()
+
+        filtered_members = []
+        for member in sponsor_members:
+            member_number = member.get("member_number", "")
+            full_name = member.get("full_name", "")
+            if search_lower and search_lower not in member_number.lower() and search_lower not in full_name.lower():
+                continue
+            filtered_members.append(member)
+
+        status_palette = [
+            {"key": "aktif", "label": "Aktif Üye", "icon": "person", "color": "bg-[#16a34a]"},
+            {"key": "pasif", "label": "Pasif Üye", "icon": "person_off", "color": "bg-[#dc2626]"},
+            {"key": "siparis", "label": "Son yıl içinde sipariş vermemiş", "icon": "calendar_month", "color": "bg-[#7c3aed]"},
+            {"key": "silinmis", "label": "Silinmiş Üye", "icon": "clear", "color": "bg-[#0f172a]"},
+        ]
+
+        records = []
+        for index, member in enumerate(filtered_members):
+            palette = status_palette[index % len(status_palette)]
+            personal_points = (index + 1) * 8
+            team_points = (index + 1) * 12
+            total_points = personal_points + team_points
+            records.append(
+                {
+                    "member_number": member.get("member_number", "Tanımlanmadı"),
+                    "full_name": member.get("full_name", "Üye"),
+                    "total_members": (index % 3) + 1,
+                    "personal_points": personal_points,
+                    "team_points": team_points,
+                    "total_points": total_points,
+                    "status_key": palette["key"],
+                    "status_label": palette["label"],
+                    "status_icon": palette["icon"],
+                    "status_color": palette["color"],
+                }
+            )
+
+        return render_template(
+            "refekip.html",
+            months=months,
+            year_options=year_options,
+            selected_month=selected_month,
+            selected_year=selected_year,
+            search_query=search_query,
+            records=records,
+            status_legends=status_palette,
+            format_points=format_points,
         )
 
     @app.route("/upload-avatar", methods=["POST"])
