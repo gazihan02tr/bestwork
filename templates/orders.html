@@ -16,6 +16,10 @@
                                     {{ order.created_at.strftime("%d %B %Y %H:%M") if order.created_at else "" }}
                                 </p>
                             </div>
+                            <div class="text-right">
+                                <p class="text-xs text-on-surface-variant uppercase tracking-wide">Sipariş No</p>
+                                <p class="text-sm font-semibold text-on-surface">{{ order.order_number or order._id }}</p>
+                            </div>
                             <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container text-sm font-semibold">
                                 <span class="material-symbols-outlined text-base">local_shipping</span>
                                 {{ order.status|capitalize }}

@@ -107,6 +107,31 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="bg-white rounded-3xl shadow-xl p-6 space-y-4">
+                <header class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold tracking-wide">Kariyer Takibi</h3>
+                    <span class="text-xs uppercase tracking-[0.3em] text-on-surface-variant">Her aşama</span>
+                </header>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {% for entry in career_entries_ordered %}
+                    <div class="rounded-2xl border border-outline-variant p-4 space-y-2 {% if entry.english == current_career_english %}bg-primary/5 border-primary{% endif %}">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-2xl text-primary">{{ entry.icon }}</span>
+                            <div>
+                                <p class="text-lg font-semibold text-on-surface">{{ entry.english }}</p>
+                                <p class="text-xs uppercase tracking-[0.4em] text-on-surface-variant">{{ entry.turkish }}</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-on-surface-variant">
+                            Sağ PV: {{ "{:,.0f}".format(entry.left) }} · Sol PV: {{ "{:,.0f}".format(entry.right) }}
+                        </p>
+                        <div class="w-full h-2 bg-surface rounded-full overflow-hidden">
+                            <div class="h-full bg-primary" style="width: {{ (loop.index0 + 1) * 6 + 40 if (loop.index0 + 1) * 6 + 40 <= 100 else 100 }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div><br>
     </div>
 {% if pending_placements %}

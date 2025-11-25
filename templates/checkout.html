@@ -7,7 +7,7 @@
 
         <form method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
-                <div class="bg-surface rounded-2xl elevation-1 p-6 space-y-4">
+                <div class="bg-surface rounded-2xl elevation-1 p-6 space-y-6">
                     <h2 class="text-xl font-semibold text-on-surface">Teslimat Bilgileri</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -18,18 +18,115 @@
                             <label class="block text-sm font-medium text-on-surface mb-1">E-posta</label>
                             <input type="email" value="{{ current_user.email }}" disabled class="w-full px-4 py-3 rounded-xl bg-surface-variant text-on-surface">
                         </div>
-                        <div class="md:col-span-2">
+                    </div>
+
+                    {% if saved_addresses %}
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-on-surface">Kayıtlı Adresler</p>
+                            <div class="space-y-2">
+                                {% for addr in saved_addresses %}
+                                    <label class="flex items-start gap-3 border border-outline-variant rounded-2xl p-4 cursor-pointer transition hover:border-primary">
+                                        <input
+                                            type="radio"
+                                            name="selected_address"
+                                            value="{{ addr.address_id }}"
+                                            class="mt-1 h-4 w-4 text-primary accent-primary"
+                                            {% if selected_address_id == addr.address_id %}checked{% endif %}
+                                        >
+                                        <div class="text-sm">
+                                            <p class="font-semibold text-on-surface">{{ addr.label }}</p>
+                                            <p class="text-on-surface-variant">{{ addr.address }}</p>
+                                            <p class="text-on-surface-variant">
+                                                {{ addr.city }}{% if addr.postal_code %}, {{ addr.postal_code }}{% endif %}
+                                                {% if addr.district %} / {{ addr.district }}{% endif %}
+                                            </p>
+                                        </div>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <label class="flex items-start gap-3 text-sm text-on-surface-variant cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="selected_address"
+                                    value="new"
+                                    class="mt-1 h-4 w-4 text-primary accent-primary"
+                                    {% if selected_address_id == "new" %}checked{% endif %}
+                                >
+                                Yeni bir adres gir
+                            </label>
+                        </div>
+                    {% else %}
+                        <input type="hidden" name="selected_address" value="new">
+                    {% endif %}
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-on-surface mb-1">Adres Etiketiniz</label>
+                            <input
+                                type="text"
+                                name="address_label"
+                                value="{{ new_address_data.label }}"
+                                class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                                placeholder="Örn. Ev, İş, Yazlık"
+                            >
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-on-surface mb-1">Adres</label>
-                            <input type="text" required placeholder="Örn. Atatürk Cad. No:10 Daire:4 Kadıköy / İstanbul" class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface">
+                            <input
+                                type="text"
+                                name="address_line"
+                                value="{{ new_address_data.address }}"
+                                class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                                placeholder="Atatürk Cad. No:10 Daire:4 Kadıköy / İstanbul"
+                            >
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-on-surface mb-1">Şehir</label>
+                                <input
+                                    type="text"
+                                    name="city"
+                                    value="{{ new_address_data.city }}"
+                                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-on-surface mb-1">Posta Kodu</label>
+                                <input
+                                    type="text"
+                                    name="postal_code"
+                                    value="{{ new_address_data.postal_code }}"
+                                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                                >
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-on-surface mb-1">Şehir</label>
-                            <input type="text" required class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface">
+                            <label class="block text-sm font-medium text-on-surface mb-1">İlçe</label>
+                            <input
+                                type="text"
+                                name="district"
+                                value="{{ new_address_data.district }}"
+                                class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                            >
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-on-surface mb-1">Posta Kodu</label>
-                            <input type="text" required class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface">
+                            <label class="block text-sm font-medium text-on-surface mb-1">Not (opsiyonel)</label>
+                            <textarea
+                                name="address_note"
+                                rows="2"
+                                class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                                placeholder="Teslimat sırasında dikkat edilmesi gerekenler"
+                            >{{ new_address_data.note }}</textarea>
                         </div>
+                        <label class="inline-flex items-center gap-2 text-sm text-on-surface-variant">
+                            <input
+                                type="checkbox"
+                                name="save_address"
+                                class="accent-primary"
+                                {% if new_address_data.save_address %}checked{% endif %}
+                            >
+                            Bu adresi kaydet ve sonraki alışverişlerde kullan
+                        </label>
                     </div>
                 </div>
 

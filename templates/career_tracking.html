@@ -1,0 +1,128 @@
+{% extends "inc/base.html" %}
+{% block title %}Kariyer Takibi{% endblock %}
+{% block content %}
+    {% include 'inc/backmenu.html' %}
+
+<section class="py-10 bg-background">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 bg-white rounded-full shadow-sm px-4 py-2">
+                <button class="p-2 rounded-full bg-primary text-on-primary hover:bg-primary/90 transition" type="button" aria-label="geri">
+                    <span class="material-symbols-outlined text-base">arrow_back</span>
+                </button>
+                <select class="px-3 py-1 rounded-full border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-transparent" name="month">
+                    {% for month in ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"] %}
+                        <option value="{{ month }}" {% if time_control.selected_month == month %}selected{% endif %}>{{ month }}</option>
+                    {% endfor %}
+                </select>
+                <select class="px-3 py-1 rounded-full border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-transparent" name="year">
+                    {% for year in range(2022, datetime.utcnow().year + 2) %}
+                        <option value="{{ year }}" {% if time_control.selected_year == year|string %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+                <button class="p-2 rounded-full bg-primary text-on-primary hover:bg-primary/90 transition" type="button" aria-label="ileri">
+                    <span class="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+            </div>
+            <button class="ml-auto px-5 py-2 rounded-2xl border border-outline-variant text-sm font-semibold uppercase tracking-wide bg-white hover:bg-primary/5 transition">
+                Temizle
+            </button>
+        </div>
+
+        <div class="bg-white rounded-[28px] shadow-2xl overflow-hidden">
+                <div class="flex text-xs uppercase tracking-[0.3em] bg-white/80">
+                    {% for entry in career_entries %}
+                    <div class="flex-1 py-3 text-center border-r last:border-0 space-y-1">
+                        <span class="material-symbols-outlined text-lg text-primary">{{ entry.icon }}</span>
+                        <p class="text-center font-semibold text-on-surface-variant">{{ entry.english }}</p>
+                        <p class="text-center text-on-surface-variant text-[10px]">{{ entry.turkish }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <article class="bg-white rounded-3xl shadow-lg p-6 space-y-4 flex flex-col items-center text-center">
+                <span class="material-symbols-outlined text-6xl text-primary">diamond</span>
+                <h2 class="text-xl font-semibold tracking-wide">{{ current_career }}</h2>
+                <p class="text-sm text-on-surface-variant">Güncel Kariyer Başlangıcı</p>
+                <div class="space-y-1 text-left w-full">
+                    <p class="text-xs uppercase text-on-surface-variant tracking-[0.3em]">Sol PV</p>
+                    <p class="text-2xl font-semibold">{{ "{:,.0f}".format(summary.left_pv or 0) }} PV</p>
+                    <p class="text-xs uppercase text-on-surface-variant tracking-[0.3em]">Sağ PV</p>
+                    <p class="text-2xl font-semibold">{{ "{:,.0f}".format(summary.right_pv or 0) }} PV</p>
+                </div>
+            </article>
+            <article class="bg-gradient-to-br from-primary to-cyan-600 text-white rounded-3xl shadow-2xl p-6 space-y-6 relative overflow-hidden">
+                <div class="flex items-center gap-4">
+                    <span class="material-symbols-outlined text-5xl">diamond</span>
+                    <div>
+                        <p class="text-sm font-semibold uppercase">Bir Sonraki Seviye</p>
+                        <p class="text-2xl font-semibold tracking-wide">{{ summary.next_rank }}</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm">Hedef PV</p>
+                    <p class="text-3xl font-semibold">{{ summary.target_pv }}</p>
+                    <div class="w-full h-2 bg-white/30 rounded-full overflow-hidden">
+                        <div class="h-full bg-white" style="width: {{ current_card.progress if current_card else 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between text-sm uppercase tracking-wide">
+                    <span>Kalan Sol</span>
+                    <span>Ulaştınız</span>
+                </div>
+                <div class="h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div class="h-full bg-white" style="width: 70%"></div>
+                </div>
+                <div class="absolute inset-y-0 right-0 w-28 opacity-30">
+                    <span class="material-symbols-outlined text-[120px] absolute top-[-38px] right-[-6px]">diamond</span>
+                </div>
+            </article>
+            <article class="bg-white rounded-3xl shadow-lg p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm uppercase text-on-surface-variant tracking-[0.3em]">Kariyer Puanı</span>
+                    <span class="text-xl font-semibold">5.000,00</span>
+                </div>
+                <div class="border-t border-outline-variant pt-3 space-y-3">
+                    <p class="text-sm text-on-surface-variant">Paket Şartı</p>
+                    <p class="text-3xl font-semibold text-on-surface">Aktif</p>
+                </div>
+                <a href="{{ url_for('career_tracking') }}" class="inline-flex items-center justify-center gap-2 w-full py-3 rounded-full border border-primary text-primary font-semibold hover:bg-primary/10 transition">
+                    Detayları Gör
+                </a>
+            </article>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl p-6 space-y-4">
+            <header class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Kariyer Yolculuğu</h3>
+                <span class="text-xs uppercase tracking-[0.3em] text-on-surface-variant">PV hedefleri</span>
+            </header>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {% for card in rank_cards %}
+                    <div class="border border-outline-variant rounded-2xl p-4 space-y-2 {% if card.label == current_career %}bg-primary/5 border-primary{% endif %}">
+                        <div class="flex items-center justify-between text-sm uppercase tracking-[0.3em]">
+                            <span>Adım {{ card.step }}</span>
+                            <span class="text-on-surface-variant">{{ card.subtitle }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-2xl text-primary">{{ card.icon }}</span>
+                            <p class="text-xl font-semibold">{{ card.label }}</p>
+                        </div>
+                        {% if card.turkish %}
+                        <p class="text-xs text-on-surface-variant">{{ card.turkish }}</p>
+                        {% endif %}
+                        <p class="text-xs text-on-surface-variant font-semibold">
+                            {{ "{:,.0f}".format(card.left_target) }} PV Sağ / {{ "{:,.0f}".format(card.right_target) }} PV Sol
+                        </p>
+                        <div class="w-full h-2 bg-surface rounded-full overflow-hidden">
+                            <div class="h-full bg-primary" style="width: {{ card.progress }}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

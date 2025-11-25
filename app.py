@@ -1033,6 +1033,7 @@ def register_routes(app: Flask) -> None:
                 "value": title_value,
                 "subtitle": None,
                 "color": "from-amber-600 to-amber-400",
+                "link": url_for("career_tracking"),
             },
             {
                 "title": "MEVCUT SEVİYENİZ",
@@ -1040,6 +1041,7 @@ def register_routes(app: Flask) -> None:
                 "value": profile.get("career", "Girişimci").title(),
                 "subtitle": profile.get("next_career"),
                 "color": "from-amber-700 to-yellow-500",
+                "link": url_for("career_tracking"),
             },
             {
                 "title": "GİRİŞİMCİLİK SEVİYENİZ",
@@ -1075,6 +1077,7 @@ def register_routes(app: Flask) -> None:
                 "icon": "attach_money",
                 "value": f"{personal_cv:,.2f} CV",
                 "subtitle": None,
+                "link": url_for("prim_info"),
                 "color": "from-emerald-600 to-emerald-500",
             },
             {
@@ -1090,9 +1093,28 @@ def register_routes(app: Flask) -> None:
                 "icon": "payments",
                 "value": f"{instant_income:,.2f} ₺",
                 "subtitle": None,
+                "link": url_for("prim_info"),
                 "color": "from-green-600 to-green-500",
             },
         ]
+
+        career_entries = build_career_entries()
+        current_turkish = (profile.get("career") or "DİSTRİBÜTÖR").upper()
+        current_index = next(
+            (i for i, entry in enumerate(career_entries) if entry["turkish"] == current_turkish),
+            0,
+        )
+        current_career_english = career_entries[current_index]["english"]
+        career_entries_ordered = [career_entries[current_index]] + [
+            entry for i, entry in enumerate(career_entries) if i != current_index
+        ]
+        current_display_title = current_career_english
+        current_display_subtitle = current_turkish
+        for card in dashboard_cards:
+            if card["title"] in {"MEVCUT SEVİYENİZ", "KARİYERİNİZ"}:
+                card["value"] = current_display_title
+                card["subtitle"] = current_display_subtitle
+                card["icon"] = "diamond"
 
         return render_template(
             "dashboard.html",
@@ -1103,6 +1125,83 @@ def register_routes(app: Flask) -> None:
             profile=profile,
             avatar_src=avatar_src,
             varis_members=varis_members,
+            career_entries=career_entries,
+            career_entries_ordered=career_entries_ordered,
+            current_career_english=current_career_english,
+        )
+
+    def build_career_entries():
+        return [
+            {"turkish": "DİSTRİBÜTÖR", "english": "Distributor", "icon": "diamond", "left": 5000, "right": 0},
+            {"turkish": "PLATİN", "english": "Platinum", "icon": "diamond", "left": 5000, "right": 5000},
+            {"turkish": "İNCİ", "english": "Pearl", "icon": "diamond", "left": 15000, "right": 15000},
+            {"turkish": "SAFİR", "english": "Sapphire", "icon": "diamond", "left": 50000, "right": 50000},
+            {"turkish": "YAKUT", "english": "Ruby", "icon": "diamond", "left": 150000, "right": 150000},
+            {"turkish": "ZÜMRÜT", "english": "Emerald", "icon": "diamond", "left": 500000, "right": 500000},
+            {"turkish": "ELMAS", "english": "Diamond", "icon": "diamond", "left": 1000000, "right": 1000000},
+            {"turkish": "DOUBLE DİAMOND", "english": "Double Diamond", "icon": "diamond", "left": 2000000, "right": 2000000},
+            {"turkish": "TRİPLE DİAMOND", "english": "Triple Diamond", "icon": "diamond", "left": 4000000, "right": 4000000},
+            {"turkish": "PRESIDENT", "english": "President", "icon": "diamond", "left": 8000000, "right": 8000000},
+            {"turkish": "DOUBLE PRESIDENT", "english": "Double President", "icon": "diamond", "left": 16000000, "right": 16000000},
+            {"turkish": "TRIPLE PRESIDENT", "english": "Triple President", "icon": "diamond", "left": 32000000, "right": 32000000},
+        ]
+
+    @app.route("/career-tracking")
+    @login_required
+    def career_tracking():
+        profile = g.user.get("profile", {}) or {}
+        current_career = (profile.get("career") or "DİSTRİBÜTÖR").upper()
+        career_entries = build_career_entries()
+        turkish_to_english = {entry["turkish"]: entry["english"] for entry in career_entries}
+        current_turkish = current_career
+        current_career = turkish_to_english.get(current_turkish, "Distributor")
+        careers = [entry["english"] for entry in career_entries]
+
+        time_control = {
+            "selected_month": request.args.get("month", datetime.utcnow().strftime("%B")),
+            "selected_year": request.args.get("year", str(datetime.utcnow().year)),
+        }
+
+        rank_cards = []
+        for index, entry in enumerate(career_entries, start=1):
+            label = entry["english"]
+            threshold = entry.get("left", 0) + entry.get("right", 0)
+            rank_cards.append(
+                {
+                    "step": index,
+                    "label": label,
+                    "turkish": entry["turkish"],
+                    "icon": entry.get("icon", "diamond"),
+                    "threshold": f"{threshold:,.0f} PV",
+                    "left_target": entry.get("left", 0),
+                    "right_target": entry.get("right", 0),
+                    "subtitle": "Aktif" if label == current_career else "Bekleniyor",
+                    "progress": min(100, index * 8 + 30),
+                }
+            )
+
+        try:
+            current_index = careers.index(current_career)
+        except ValueError:
+            current_index = 0
+
+        current_card = rank_cards[current_index] if 0 <= current_index < len(rank_cards) else rank_cards[0] if rank_cards else None
+
+        return render_template(
+            "career_tracking.html",
+            careers=careers,
+            rank_cards=rank_cards,
+            current_career=current_career,
+            career_entries=career_entries,
+            time_control=time_control,
+            current_card=current_card,
+            summary={
+                "left_pv": profile.get("matching_left", 0),
+                "right_pv": profile.get("matching_right", 0),
+                "next_rank": careers[min(current_index + 1, len(careers) - 1)],
+                "target_pv": f"{career_entries[min(current_index + 1, len(career_entries) - 1)].get('left', 0) + career_entries[min(current_index + 1, len(career_entries) - 1)].get('right', 0):,.0f}",
+            },
+            datetime=datetime,
         )
 
     @app.route("/bank-info", methods=["GET", "POST"])
@@ -1533,6 +1632,10 @@ def register_routes(app: Flask) -> None:
             format_points=format_points,
         )
 
+    @app.route("/s400")
+    def s400_portal():
+        return render_template("s400/index.html")
+
     @app.route("/upload-avatar", methods=["POST"])
     @login_required
     def upload_avatar():
@@ -1682,6 +1785,22 @@ def register_routes(app: Flask) -> None:
         next_url = request.args.get("next", "")
         return render_template("auth/login.html", next=next_url, identifier="")
 
+    @app.route("/forgot-password", methods=["GET", "POST"])
+    def forgot_password():
+        identifier = ""
+        if request.method == "POST":
+            identifier = request.form.get("identifier", "").strip()
+            if not identifier:
+                flash("Lütfen e-posta, telefon veya ID girin.", "warning")
+            else:
+                user = resolve_user_by_identifier(app, identifier)
+                if not user:
+                    flash("Girilen bilgilerle eşleşen kullanıcı bulunamadı.", "warning")
+                else:
+                    flash("Şifre sıfırlama bağlantısı kayıtlı e-posta adresinize gönderildi.", "success")
+
+        return render_template("auth/forgot_password.html", identifier=identifier)
+
     @app.route("/logout")
     def logout():
         session.clear()
@@ -1760,9 +1879,97 @@ def register_routes(app: Flask) -> None:
             flash("Sepetiniz boş. Lütfen ürün ekleyin.", "warning")
             return redirect(url_for("index"))
 
+        profile = g.user.get("profile", {}) or {}
+        saved_addresses = profile.get("addresses", []) or []
+        selected_address_id = "new"
+        new_address_data = {
+            "label": "",
+            "address": "",
+            "city": "",
+            "postal_code": "",
+            "district": "",
+            "note": "",
+            "save_address": False,
+        }
+
         if request.method == "POST":
+            selected_address_id = request.form.get("selected_address", "new")
+
+            delivery_address = None
+            if selected_address_id != "new":
+                delivery_address = next(
+                    (addr for addr in saved_addresses if addr.get("address_id") == selected_address_id),
+                    None,
+                )
+                if not delivery_address:
+                    flash("Seçilen adres bulunamadı.", "warning")
+                    return render_template(
+                        "checkout.html",
+                        cart_items=cart_items,
+                        cart_total=cart_total,
+                        saved_addresses=saved_addresses,
+                        selected_address_id="new",
+                        new_address_data=new_address_data,
+                    )
+            else:
+                new_address_data = {
+                    "label": request.form.get("address_label", "").strip(),
+                    "address": request.form.get("address_line", "").strip(),
+                    "city": request.form.get("city", "").strip(),
+                    "postal_code": request.form.get("postal_code", "").strip(),
+                    "district": request.form.get("district", "").strip(),
+                    "note": request.form.get("address_note", "").strip(),
+                    "save_address": request.form.get("save_address") is not None,
+                }
+
+                if not (
+                    new_address_data["label"]
+                    and new_address_data["address"]
+                    and new_address_data["city"]
+                    and new_address_data["postal_code"]
+                ):
+                    flash("Lütfen tüm teslimat bilgilerini eksiksiz doldurun.", "warning")
+                    return render_template(
+                        "checkout.html",
+                        cart_items=cart_items,
+                        cart_total=cart_total,
+                        saved_addresses=saved_addresses,
+                        selected_address_id="new",
+                        new_address_data=new_address_data,
+                    )
+
+                delivery_address = {
+                    "label": new_address_data["label"],
+                    "address": new_address_data["address"],
+                    "city": new_address_data["city"],
+                    "postal_code": new_address_data["postal_code"],
+                    "district": new_address_data["district"],
+                    "note": new_address_data["note"],
+                }
+
+                if new_address_data["save_address"]:
+                    stored_address = {
+                        "address_id": uuid4().hex,
+                        **delivery_address,
+                        "created_at": datetime.utcnow(),
+                    }
+                    app.db.users.update_one(
+                        {"_id": g.user["_id"]},
+                        {"$push": {"profile.addresses": stored_address}},
+                    )
+                    saved_addresses.append(stored_address)
+
+            now = datetime.utcnow()
+            date_part = now.strftime("%y%m%d")
+            time_part = now.strftime("%H%M%S")
+            daily_count = app.db.orders.count_documents(
+                {"order_number": {"$regex": f'^{date_part}'}}
+            )
+            order_number = f"{date_part}{time_part}{daily_count + 1:03d}"
+
             order_doc = {
                 "user_id": g.user["_id"],
+                "order_number": order_number,
                 "items": [
                     {
                         "product_id": ObjectId(item["product_id"]),
@@ -1775,6 +1982,14 @@ def register_routes(app: Flask) -> None:
                 "total": cart_total,
                 "created_at": datetime.utcnow(),
                 "status": "hazırlanıyor",
+                "delivery_address": {
+                    "label": delivery_address.get("label"),
+                    "address": delivery_address.get("address"),
+                    "city": delivery_address.get("city"),
+                    "postal_code": delivery_address.get("postal_code"),
+                    "district": delivery_address.get("district"),
+                    "note": delivery_address.get("note"),
+                },
             }
 
             app.db.orders.insert_one(order_doc)
@@ -1782,7 +1997,14 @@ def register_routes(app: Flask) -> None:
             flash("Siparişiniz alındı! Teşekkür ederiz.", "success")
             return redirect(url_for("orders"))
 
-        return render_template("checkout.html", cart_items=cart_items, cart_total=cart_total)
+        return render_template(
+            "checkout.html",
+            cart_items=cart_items,
+            cart_total=cart_total,
+            saved_addresses=saved_addresses,
+            selected_address_id=selected_address_id,
+            new_address_data=new_address_data,
+        )
 
     @app.route("/orders")
     @login_required
