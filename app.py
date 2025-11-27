@@ -1136,14 +1136,14 @@ def register_routes(app: Flask) -> None:
             {"turkish": "PLATİN", "english": "Platinum", "icon": "diamond", "left": 5000, "right": 5000},
             {"turkish": "İNCİ", "english": "Pearl", "icon": "diamond", "left": 15000, "right": 15000},
             {"turkish": "SAFİR", "english": "Sapphire", "icon": "diamond", "left": 50000, "right": 50000},
-            {"turkish": "YAKUT", "english": "Ruby", "icon": "diamond", "left": 150000, "right": 150000},
-            {"turkish": "ZÜMRÜT", "english": "Emerald", "icon": "diamond", "left": 500000, "right": 500000},
-            {"turkish": "ELMAS", "english": "Diamond", "icon": "diamond", "left": 1000000, "right": 1000000},
-            {"turkish": "DOUBLE DİAMOND", "english": "Double Diamond", "icon": "diamond", "left": 2000000, "right": 2000000},
-            {"turkish": "TRİPLE DİAMOND", "english": "Triple Diamond", "icon": "diamond", "left": 4000000, "right": 4000000},
-            {"turkish": "PRESIDENT", "english": "President", "icon": "diamond", "left": 8000000, "right": 8000000},
-            {"turkish": "DOUBLE PRESIDENT", "english": "Double President", "icon": "diamond", "left": 16000000, "right": 16000000},
-            {"turkish": "TRIPLE PRESIDENT", "english": "Triple President", "icon": "diamond", "left": 32000000, "right": 32000000},
+            {"turkish": "YAKUT", "english": "Ruby", "icon": "diamond", "left": 100000, "right": 100000},
+            {"turkish": "ZÜMRÜT", "english": "Emerald", "icon": "diamond", "left": 250000, "right": 250000},
+            {"turkish": "ELMAS", "english": "Diamond", "icon": "diamond", "left": 500000, "right": 500000},
+            {"turkish": "DOUBLE DİAMOND", "english": "Double Diamond", "icon": "diamond", "left": 1000000, "right": 1000000},
+            {"turkish": "TRİPLE DİAMOND", "english": "Triple Diamond", "icon": "diamond", "left": 2000000, "right": 2000000},
+            {"turkish": "PRESIDENT", "english": "President", "icon": "diamond", "left": 4000000, "right": 4000000},
+            {"turkish": "DOUBLE PRESIDENT", "english": "Double President", "icon": "diamond", "left": 8000000, "right": 8000000},
+            {"turkish": "TRIPLE PRESIDENT", "english": "Triple President", "icon": "diamond", "left": 16000000, "right": 16000000},
         ]
 
     @app.route("/career-tracking")
