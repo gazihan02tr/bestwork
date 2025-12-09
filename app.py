@@ -1768,23 +1768,12 @@ def register_routes(app: Flask) -> None:
             flash("Kayıt silinemedi.", "error")
         return redirect(url_for("dashboard"))
 
-<<<<<<< HEAD
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-=======
     def _render_login_view(template_name: str):
->>>>>>> 894ff30 (BestSoft)
         if request.method == "POST":
             identifier = request.form.get("identifier", "").strip()
             password = request.form.get("password", "")
             next_url = request.args.get("next") or request.form.get("next") or url_for("index")
 
-<<<<<<< HEAD
-            user = resolve_user_by_identifier(app, identifier)
-            if not user or not check_password_hash(user["password_hash"], password):
-                flash("Kimlik bilgileri veya şifre hatalı.", "error")
-                return render_template("auth/login.html", identifier=identifier, next=next_url)
-=======
             if identifier == DEMO_LOGIN_IDENTIFIER and password == DEMO_LOGIN_PASSWORD:
                 user = ensure_demo_user_exists(app)
             else:
@@ -1795,16 +1784,12 @@ def register_routes(app: Flask) -> None:
             if not user:
                 flash("Kimlik bilgileri veya şifre hatalı.", "error")
                 return render_template(template_name, identifier=identifier, next=next_url)
->>>>>>> 894ff30 (BestSoft)
 
             session["user_id"] = str(user["_id"])
             flash("Tekrar hoş geldiniz!", "success")
             return redirect(next_url)
 
         next_url = request.args.get("next", "")
-<<<<<<< HEAD
-        return render_template("auth/login.html", next=next_url, identifier="")
-=======
         identifier = request.args.get("identifier", "")
         return render_template(template_name, next=next_url, identifier=identifier)
 
@@ -1819,7 +1804,7 @@ def register_routes(app: Flask) -> None:
     @app.route("/bestwork")
     def bestsoft_landing():
         return render_template("bestsoft/index.html")
->>>>>>> 894ff30 (BestSoft)
+
 
     @app.route("/forgot-password", methods=["GET", "POST"])
     def forgot_password():
@@ -2181,6 +2166,62 @@ def resolve_user_by_identifier(app: Flask, identifier: str):
 
     upper = identifier.upper()
     return app.db.users.find_one({"referral_code": upper})
+
+
+def ensure_demo_user_exists(app: Flask):
+    """
+    Tanımlı demo kullanıcı yoksa oluştur ve döndür.
+    Demo hesabı sabit kimlik ve parola ile giriş denemeleri için kullanılır.
+    """
+    existing = app.db.users.find_one({"referral_code": DEMO_LOGIN_IDENTIFIER})
+    if existing:
+        return existing
+
+    demo_identity = "11111111110"
+    password_hash = generate_password_hash(DEMO_LOGIN_PASSWORD)
+    encrypted_identity = encrypt_identity_number(demo_identity)
+    demo_user = {
+        "name": "Demo Kullanıcı",
+        "email": "demo@bestwork.local",
+        "phone": "+900000000000",
+        "identity_number_hash": hash_identity_number(demo_identity),
+        "identity_number_encrypted": encrypted_identity,
+        "password_hash": password_hash,
+        "created_at": datetime.utcnow(),
+        "country_code": "90",
+        "referral_code": DEMO_LOGIN_IDENTIFIER,
+        "sponsor_id": None,
+        "placement_parent_id": None,
+        "placement_position": None,
+        "placement_status": "placed",
+        "profile": {
+            "first_name": "Demo",
+            "last_name": "Kullanıcı",
+            "membership_type": "demo",
+            "birth_date": "1990-01-01",
+            "gender": "other",
+            "is_foreign": False,
+            "city": "İstanbul",
+            "district": "Kadıköy",
+            "neighborhood": "",
+            "tax_office": "",
+            "tax_number": "",
+            "postal_code": "34000",
+            "address": "Demo adresi",
+            "agreements": {
+                "distributor": True,
+                "kvkk": True,
+                "communication": True,
+            },
+            "varis_entries": [],
+        },
+        "address_book": [],
+        "wallet": {"balance": 0, "pending": 0},
+    }
+
+    result = app.db.users.insert_one(demo_user)
+    demo_user["_id"] = result.inserted_id
+    return demo_user
 
 
 def validate_tckn(tckn: str) -> bool:
