@@ -48,11 +48,8 @@ LANGUAGE_LABELS = {
 }
 
 ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
-<<<<<<< HEAD
-=======
 DEMO_LOGIN_IDENTIFIER = "000954"
 DEMO_LOGIN_PASSWORD = "12345"
->>>>>>> 894ff30 (BestSoft)
 _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
         "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim!",
