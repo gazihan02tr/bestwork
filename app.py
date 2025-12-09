@@ -48,6 +48,11 @@ LANGUAGE_LABELS = {
 }
 
 ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+<<<<<<< HEAD
+=======
+DEMO_LOGIN_IDENTIFIER = "000954"
+DEMO_LOGIN_PASSWORD = "12345"
+>>>>>>> 894ff30 (BestSoft)
 _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
         "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim!",
@@ -1766,24 +1771,58 @@ def register_routes(app: Flask) -> None:
             flash("Kayıt silinemedi.", "error")
         return redirect(url_for("dashboard"))
 
+<<<<<<< HEAD
     @app.route("/login", methods=["GET", "POST"])
     def login():
+=======
+    def _render_login_view(template_name: str):
+>>>>>>> 894ff30 (BestSoft)
         if request.method == "POST":
             identifier = request.form.get("identifier", "").strip()
             password = request.form.get("password", "")
             next_url = request.args.get("next") or request.form.get("next") or url_for("index")
 
+<<<<<<< HEAD
             user = resolve_user_by_identifier(app, identifier)
             if not user or not check_password_hash(user["password_hash"], password):
                 flash("Kimlik bilgileri veya şifre hatalı.", "error")
                 return render_template("auth/login.html", identifier=identifier, next=next_url)
+=======
+            if identifier == DEMO_LOGIN_IDENTIFIER and password == DEMO_LOGIN_PASSWORD:
+                user = ensure_demo_user_exists(app)
+            else:
+                user = resolve_user_by_identifier(app, identifier)
+                if user and not check_password_hash(user["password_hash"], password):
+                    user = None
+
+            if not user:
+                flash("Kimlik bilgileri veya şifre hatalı.", "error")
+                return render_template(template_name, identifier=identifier, next=next_url)
+>>>>>>> 894ff30 (BestSoft)
 
             session["user_id"] = str(user["_id"])
             flash("Tekrar hoş geldiniz!", "success")
             return redirect(next_url)
 
         next_url = request.args.get("next", "")
+<<<<<<< HEAD
         return render_template("auth/login.html", next=next_url, identifier="")
+=======
+        identifier = request.args.get("identifier", "")
+        return render_template(template_name, next=next_url, identifier=identifier)
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        return _render_login_view("auth/login.html")
+
+    @app.route("/bestsoft", methods=["GET", "POST"])
+    def bestsoft_login():
+        return _render_login_view("bestsoft/login.html")
+
+    @app.route("/bestwork")
+    def bestsoft_landing():
+        return render_template("bestsoft/index.html")
+>>>>>>> 894ff30 (BestSoft)
 
     @app.route("/forgot-password", methods=["GET", "POST"])
     def forgot_password():

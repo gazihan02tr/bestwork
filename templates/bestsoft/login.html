@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestSoft - Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] min-h-screen flex items-center justify-center overflow-hidden relative">
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ url_for('static', filename='bestsoft/img/bg_bestsoft.png') }}');"></div>
+    <div class="absolute inset-0 bg-slate-900/20 "></div>
+
+    <div class="relative z-10 w-full max-w-md px-6">
+        <div class="text-center">
+            <div class="relative bg-slate-700/60 border border-white/10 rounded-3xl shadow-2xl shadow-black/40 px-12 py-10 backdrop-blur-lg mt-[50%]">
+                <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1 w-3/5 rounded-t-3xl bg-gradient-to-r from-transparent via-sky-300 to-transparent"></span>
+                <span class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-3/5 rounded-b-3xl bg-gradient-to-r from-transparent via-sky-300 to-transparent"></span>
+
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                <div class="flex flex-col gap-2 mb-6">
+                    {% for category, message in messages %}
+                        <div class="px-4 py-3 text-left text-sm rounded-2xl border shadow {{ 'bg-emerald-600/20 border-emerald-300/50 text-emerald-50' if category == 'success' else '' }}{{ 'bg-rose-600/20 border-rose-300/50 text-rose-50' if category == 'error' else '' }}{{ 'bg-amber-500/25 border-amber-200/50 text-amber-50' if category == 'warning' else '' }}{{ 'bg-sky-600/20 border-sky-300/50 text-sky-50' if category not in ['success','error','warning'] else '' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form method="post" class="space-y-5">
+                    <input type="hidden" name="next" value="{{ next or '' }}">
+
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 bg-slate-800/60 border border-white/10 rounded-full px-6 py-3 transition focus-within:border-sky-300/80">
+                            <span class="text-xl text-slate-200">👤</span>
+                            <input type="text"
+                                   name="identifier"
+                                   value="{{ identifier or '' }}"
+                                   placeholder="Üye ID"
+                                   required
+                                   autocomplete="off"
+                                   class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none">
+                        </div>
+
+                        <div class="flex items-center gap-3 bg-slate-800/60 border border-white/10 rounded-full px-6 py-3 transition focus-within:border-sky-300/80">
+                            <span class="text-xl text-slate-200">🔒</span>
+                            <input type="password"
+                                   name="password"
+                                   placeholder="Şifre"
+                                   required
+                                   autocomplete="off"
+                                   class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full py-3 rounded-full text-white text-sm font-semibold tracking-wide bg-gradient-to-r from-sky-500 via-sky-400 to-sky-300 shadow-lg shadow-sky-900/40 hover:-translate-y-1 hover:shadow-xl transition duration-300">
+                        Giriş Yap
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
