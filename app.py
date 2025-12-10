@@ -22,6 +22,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     session,
     url_for,
 )
@@ -36,6 +37,9 @@ _PASSWORD_HASH_METHOD = "pbkdf2"
 _PASSWORD_HASH_NAME = "sha256"
 _PASSWORD_DEFAULT_ITERATIONS = 260000
 _PASSWORD_SALT_LENGTH = 16
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BESTSOFT_DIST_DIR = os.path.join(BASE_DIR, "templates", "bestsoft", "BestLTE", "dist")
 
 SUPPORTED_LOCALES = ["tr", "en", "de", "ru", "bg"]
 DEFAULT_LOCALE = "tr"
@@ -1799,12 +1803,106 @@ def register_routes(app: Flask) -> None:
 
     @app.route("/bestsoft", methods=["GET", "POST"])
     def bestsoft_login():
-        return _render_login_view("bestsoft/login.html")
+        next_url = request.args.get("next") or request.form.get("next") or url_for("bestsoft_landing")
+        identifier = request.args.get("identifier", "")
+
+        if request.method == "POST":
+            identifier = request.form.get("identifier", "").strip()
+            password = request.form.get("password", "")
+
+            if not identifier or not password:
+                flash("Kullanıcı ID ve şifre zorunludur.", "warning")
+                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
+
+            user_hash = hashlib.sha256(identifier.encode("utf-8")).hexdigest()
+            record = app.db.managements.find_one({"user_id_hash": user_hash})
+            if not record:
+                flash("Geçersiz kullanıcı ID veya şifre.", "error")
+                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
+
+            cipher = get_identity_cipher()
+            try:
+                stored_user_id = cipher.decrypt(record["user_id_encrypted"].encode("utf-8")).decode("utf-8")
+                stored_password = cipher.decrypt(record["password_encrypted"].encode("utf-8")).decode("utf-8")
+            except (InvalidToken, KeyError, AttributeError, ValueError):
+                flash("Yönetici bilgileri çözümlenemedi. Lütfen tekrar deneyin.", "error")
+                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
+
+            if stored_user_id != identifier or stored_password != password:
+                flash("Geçersiz kullanıcı ID veya şifre.", "error")
+                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
+
+            session["management_entry_id"] = str(record["_id"])
+            session["management_user_id"] = stored_user_id
+            flash("BestSoft portalına hoş geldiniz.", "success")
+            return redirect(next_url)
+
+        return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
 
     @app.route("/bestwork")
+    @app.route("/bestwork/")
     def bestsoft_landing():
+        if not session.get("management_entry_id"):
+            flash("Lütfen önce BestSoft hesabınızla giriş yapın.", "warning")
+            return redirect(url_for("bestsoft_login"))
+
+        index_path = os.path.join(BESTSOFT_DIST_DIR, "index.html")
+        if os.path.isfile(index_path):
+            return redirect(url_for("bestsoft_dist", filename="index.html"))
+
         return render_template("bestsoft/index.html")
 
+    @app.route("/bestwork/<path:filename>")
+    def bestsoft_dist(filename: str):
+        if not session.get("management_entry_id"):
+            abort(403)
+
+        safe_path = os.path.normpath(filename)
+        if safe_path.startswith(".."):
+            abort(404)
+
+        target_path = os.path.join(BESTSOFT_DIST_DIR, safe_path)
+        if not os.path.isfile(target_path):
+            abort(404)
+
+        return send_from_directory(BESTSOFT_DIST_DIR, safe_path)
+
+    @app.route("/managements/setup", methods=["GET", "POST"])
+    def management_setup():
+        form_state = {"user_id": ""}
+
+        if request.method == "POST":
+            user_id = request.form.get("user_id", "").strip()
+            password = request.form.get("password", "")
+            form_state["user_id"] = user_id
+
+            if not user_id or not password:
+                flash("Kullanıcı ID ve şifre zorunludur.", "warning")
+                return render_template("managements_setup.html", form_state=form_state)
+
+            user_id_hash = hashlib.sha256(user_id.encode("utf-8")).hexdigest()
+            existing = app.db.managements.find_one({"user_id_hash": user_id_hash})
+            if existing:
+                flash("Bu kullanıcı ID'si için zaten bir yönetici kaydı mevcut.", "warning")
+                return render_template("managements_setup.html", form_state=form_state)
+
+            cipher = get_identity_cipher()
+            encrypted_user_id = cipher.encrypt(user_id.encode("utf-8")).decode("utf-8")
+            encrypted_password = cipher.encrypt(password.encode("utf-8")).decode("utf-8")
+
+            app.db.managements.insert_one(
+                {
+                    "user_id_hash": user_id_hash,
+                    "user_id_encrypted": encrypted_user_id,
+                    "password_encrypted": encrypted_password,
+                    "created_at": datetime.utcnow(),
+                }
+            )
+
+            flash("Yönetici kaydı oluşturuldu.", "success")
+            return redirect(url_for("management_setup"))
+
+        return render_template("managements_setup.html", form_state=form_state)
 
     @app.route("/forgot-password", methods=["GET", "POST"])
     def forgot_password():

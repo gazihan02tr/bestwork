@@ -1,0 +1,52 @@
+{% extends "inc/base.html" %}
+{% block title %}Managements Kaydı{% endblock %}
+{% block content %}
+<section class="py-12">
+    <div class="max-w-lg mx-auto bg-surface rounded-2xl elevation-2 px-8 py-10 space-y-6">
+        <div class="text-center space-y-2">
+            <h1 class="text-2xl font-semibold text-on-surface">Managements Koleksiyonu</h1>
+            <p class="text-on-surface-variant text-sm">
+                Bu geçici form yeni yönetici kayıtları oluşturmak içindir. Lütfen yalnızca yetkili kullanıcılar paylaşılan bilgileri girsin.
+            </p>
+        </div>
+
+        <form method="post" class="space-y-5">
+            <div>
+                <label for="user_id" class="block text-sm font-medium text-on-surface mb-1">Kullanıcı ID</label>
+                <input
+                    id="user_id"
+                    name="user_id"
+                    type="text"
+                    required
+                    value="{{ (form_state.user_id if form_state else '') or '' }}"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                    placeholder="Yönetici ID"
+                >
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-on-surface mb-1">Şifre</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary bg-surface-variant text-on-surface"
+                    placeholder="Güçlü bir şifre girin"
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="w-full py-3 rounded-full bg-primary text-on-primary font-semibold hover:elevation-2 transition-all state-layer"
+            >
+                Kaydı Oluştur
+            </button>
+        </form>
+
+        <p class="text-xs text-on-surface-variant text-center">
+            Form gönderildiğinde kullanıcı ID ve şifre bilgileri şifrelenmiş olarak managements koleksiyonunda saklanır.
+        </p>
+    </div>
+</section>
+{% endblock %}
