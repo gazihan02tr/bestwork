@@ -1,81 +1,34 @@
- <!--begin::Sidebar-->
-      <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-        <!--begin::Sidebar Brand-->
-        <div class="sidebar-brand">
-          <!--begin::Brand Link-->
-          <a href="./index.html" class="brand-link">
-            <!--begin::Brand Text-->
-            <span class="brand-text fw-light">BestSoft</span>
-            <!--end::Brand Text-->
-          </a>
-          <!--end::Brand Link-->
-        </div>
-        <!--end::Sidebar Brand-->
-        <!--begin::Sidebar Wrapper-->
-        <div class="sidebar-wrapper">
-          <nav class="mt-2">
-            <!--begin::Sidebar Menu-->
-            <ul
-              class="nav sidebar-menu flex-column"
-              data-lte-toggle="treeview"
-              role="navigation"
-              aria-label="Main navigation"
-              data-accordion="false"
-              id="navigation"
-            >
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <span class="material-symbols-outlined">
-settings
-</span>
-                  <p>
-                    E-Ticaret Ayarları
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Duyuru Ekle</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Ayarlar</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-<span class="material-symbols-outlined">
-cached
-</span>
-                  <p>
-                    Ürün Ayarları
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Duyuru Ekle</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Ayarlar</p>
-                    </a>
-                  </li>
-                </ul>
+<aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-full transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
+   <div class="h-full px-3 py-4 overflow-y-auto bg-neutral-primary-soft border-e border-default">
+      <div class="flex items-center ps-2.5 mb-5 justify-between">
+         <div class="flex items-center">
+            <span class="flex items-center justify-center w-8 h-8 me-3 text-lg font-bold text-white bg-blue-600 rounded-full">B</span>
+            <span class="self-center text-lg text-heading font-semibold whitespace-nowrap">BestSoft</span>
+         </div>
+         <a href="{{ url_for('bestsoft_logout') }}" class="text-red-600 hover:text-red-700 transition-colors" title="Çıkış yap">
+            <span class="material-symbols-outlined text-xl" aria-hidden="true">power_settings_new</span>
+         </a>
+      </div>
+      <div class="flex items-center gap-2 px-2 py-2 text-[11px] font-semibold text-neutral-tertiary uppercase tracking-wide">
+         <span class="shrink-0">E-Ticaret</span>
+         <span class="flex-1 h-px bg-neutral-tertiary/60"></span>
+      </div>
+      <ul class="space-y-2 font-medium">
+         <li>
+            <button type="button" class="flex items-center w-full px-2 py-1.5 text-left text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group" data-collapse-toggle="ecommerce-menu" aria-controls="ecommerce-menu">
+               <span class="material-symbols-outlined shrink-0 text-xl transition duration-75 group-hover:text-fg-brand" aria-hidden="true">storefront</span>
+               <span class="flex-1 ms-3 whitespace-nowrap">E-Ticaret Ayarları</span>
+               <span class="material-symbols-outlined text-sm transition duration-75 group-hover:text-fg-brand" aria-hidden="true">expand_more</span>
+            </button>
+            <ul id="ecommerce-menu" class="hidden py-2 space-y-1">
+               <li>
+                  <a href="{{ url_for('bestsoft_announcements') }}" class="flex items-center w-full px-5 py-1 text-sm text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand gap-2">
+                     <span class="material-symbols-outlined text-base" aria-hidden="true">campaign</span>
+                     <span>Duyuru Yönetimi</span>
+                  </a>
+               </li>
             </ul>
-            <!--end::Sidebar Menu-->
-          </nav>
-        </div>
-        <!--end::Sidebar Wrapper-->
-      </aside>
-      <!--end::Sidebar-->
+         </li>
+      </ul>
+   </div>
+</aside>

@@ -13,6 +13,7 @@ from uuid import uuid4
 from werkzeug.utils import secure_filename
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from flask import (
     Flask,
     abort,
@@ -56,7 +57,7 @@ DEMO_LOGIN_IDENTIFIER = "000954"
 DEMO_LOGIN_PASSWORD = "12345"
 _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
-        "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim!",
+        "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim",
         "help": "Yardım",
         "contact": "İletişim",
         "search_placeholder": "Ürün, kategori veya marka ara...",
@@ -156,6 +157,47 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "alert_default": "Инфо",
     },
 }
+
+
+def _fetch_site_setting(app: Flask, key: str, locale: Optional[str]) -> Optional[Dict[str, Any]]:
+    locale_key = locale or "default"
+    doc = app.db.site_settings.find_one({"key": key, "locale": locale_key})
+    if doc:
+        return doc
+    doc = app.db.site_settings.find_one({"key": key, "locale": {"$exists": False}})
+    if doc:
+        return doc
+    doc = app.db.site_settings.find_one({"key": key, "locale": "default"})
+    if doc:
+        return doc
+    return None
+
+
+def get_site_text_value(app: Flask, key: str, locale: str) -> Optional[str]:
+    """
+    Site metinleri koleksiyonundan dinamik içerik getir.
+    Önce istenen dili, ardından 'default' kaydını dener.
+    """
+    try:
+        doc = _fetch_site_setting(app, key, locale)
+        if doc and doc.get("value"):
+            return doc["value"]
+    except Exception:
+        return None
+    return None
+
+
+def set_site_text_value(app: Flask, key: str, locale: str, value: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    """Dinamik site metnini kaydet veya güncelle."""
+    normalized_locale = locale or "default"
+    update_data: Dict[str, Any] = {"value": value, "locale": normalized_locale, "updated_at": datetime.utcnow()}
+    if metadata:
+        update_data.update(metadata)
+    app.db.site_settings.update_one(
+        {"key": key, "locale": normalized_locale},
+        {"$set": update_data, "$setOnInsert": {"created_at": datetime.utcnow()}},
+        upsert=True,
+    )
 
 
 def build_initials_avatar(initials: str, size: int = 256) -> str:
@@ -351,7 +393,13 @@ def create_app() -> Flask:
 
     def translate(key: str) -> str:
         locale = getattr(g, "locale", DEFAULT_LOCALE)
-        return _TRANSLATIONS.get(locale, _TRANSLATIONS[DEFAULT_LOCALE]).get(key, key)
+        dynamic_value = get_site_text_value(app, key, locale)
+        if dynamic_value:
+            return dynamic_value
+        translations = _TRANSLATIONS.get(locale)
+        if translations and key in translations:
+            return translations[key]
+        return _TRANSLATIONS.get(DEFAULT_LOCALE, {}).get(key, key)
 
     app.jinja_env.globals["t"] = translate
     app.jinja_env.globals["supported_languages"] = LANGUAGE_LABELS
@@ -415,7 +463,14 @@ def register_db_helpers(app: Flask) -> None:
         cart: List[Dict] = session.get("cart", [])
         cart_count = sum(item.get("quantity", 0) for item in cart)
         current_user = getattr(g, "user", None)
-        return {"current_user": current_user, "cart_count": cart_count}
+        announcements: List[Dict[str, Any]] = []
+        try:
+            cursor = app.db.bestsoft_announcements.find().sort("created_at", -1).limit(5)
+            for doc in cursor:
+                announcements.append({"id": str(doc["_id"]), "content": doc.get("content", "")})
+        except Exception:
+            announcements = []
+        return {"current_user": current_user, "cart_count": cart_count, "global_announcements": announcements}
 
 
 def login_required(view):
@@ -1852,6 +1907,104 @@ def register_routes(app: Flask) -> None:
 
         return render_template("bestsoft/index.html")
 
+    def _require_management_session(next_endpoint: str):
+        if not session.get("management_entry_id"):
+            flash("Lütfen önce BestSoft hesabınızla giriş yapın.", "warning")
+            return redirect(url_for("bestsoft_login", next=url_for(next_endpoint)))
+        return None
+
+    @app.route("/bestwork/announcements", methods=["GET", "POST"])
+    def bestsoft_announcements():
+        redirect_response = _require_management_session("bestsoft_announcements")
+        if redirect_response:
+            return redirect_response
+        promo_locale = "default"
+
+        if request.method == "POST":
+            form_type = request.form.get("form_type") or "announcement"
+            if form_type == "promo_text":
+                content = request.form.get("promo_content", "").strip()
+                if not content:
+                    return redirect(url_for("bestsoft_announcements"))
+                set_site_text_value(
+                    app,
+                    "promo_text",
+                    promo_locale,
+                    content,
+                    {"updated_by": session.get("management_user_id")},
+                )
+                return redirect(url_for("bestsoft_announcements"))
+
+            content = request.form.get("content", "").strip()
+            if not content:
+                return redirect(url_for("bestsoft_announcements"))
+            now = datetime.utcnow()
+            app.db.bestsoft_announcements.insert_one(
+                {
+                    "content": content,
+                    "created_at": now,
+                    "updated_at": now,
+                    "created_by": session.get("management_user_id"),
+                }
+            )
+            return redirect(url_for("bestsoft_announcements"))
+
+        announcements_cursor = app.db.bestsoft_announcements.find().sort("created_at", -1)
+        announcements = [
+            {
+                "id": str(doc["_id"]),
+                "content": doc.get("content", ""),
+                "created_at_display": format_datetime_for_display(doc.get("created_at")),
+                "updated_at_display": format_datetime_for_display(doc.get("updated_at")),
+            }
+            for doc in announcements_cursor
+        ]
+        promo_text_value = get_site_text_value(app, "promo_text", promo_locale)
+        if not promo_text_value:
+            promo_text_value = _TRANSLATIONS.get(DEFAULT_LOCALE, {}).get("promo_text")
+        return render_template(
+            "bestsoft/announcements.html",
+            announcements=announcements,
+            promo_text_value=promo_text_value,
+        )
+
+    @app.route("/bestwork/announcements/<announcement_id>/update", methods=["POST"])
+    def update_announcement(announcement_id: str):
+        redirect_response = _require_management_session("bestsoft_announcements")
+        if redirect_response:
+            return redirect_response
+
+        content = request.form.get("content", "").strip()
+        if not content:
+            return redirect(url_for("bestsoft_announcements"))
+
+        try:
+            announcement_oid = ObjectId(announcement_id)
+        except (InvalidId, TypeError):
+            flash("Geçersiz duyuru kaydı.", "error")
+            return redirect(url_for("bestsoft_announcements"))
+
+        result = app.db.bestsoft_announcements.update_one(
+            {"_id": announcement_oid},
+            {"$set": {"content": content, "updated_at": datetime.utcnow()}},
+        )
+        return redirect(url_for("bestsoft_announcements"))
+
+    @app.route("/bestwork/announcements/<announcement_id>/delete", methods=["POST"])
+    def delete_announcement(announcement_id: str):
+        redirect_response = _require_management_session("bestsoft_announcements")
+        if redirect_response:
+            return redirect_response
+
+        try:
+            announcement_oid = ObjectId(announcement_id)
+        except (InvalidId, TypeError):
+            flash("Geçersiz duyuru kaydı.", "error")
+            return redirect(url_for("bestsoft_announcements"))
+
+        result = app.db.bestsoft_announcements.delete_one({"_id": announcement_oid})
+        return redirect(url_for("bestsoft_announcements"))
+
     @app.route("/bestwork/<path:filename>")
     def bestsoft_dist(filename: str):
         if not session.get("management_entry_id"):
@@ -1920,11 +2073,21 @@ def register_routes(app: Flask) -> None:
 
         return render_template("auth/forgot_password.html", identifier=identifier)
 
+    def _clear_bestsoft_session():
+        session.pop("management_entry_id", None)
+        session.pop("management_user_id", None)
+
     @app.route("/logout")
     def logout():
         session.clear()
         flash("Güvenli çıkış yapıldı.", "info")
         return redirect(url_for("index"))
+
+    @app.route("/bestsoft/logout")
+    def bestsoft_logout():
+        _clear_bestsoft_session()
+        flash("BestSoft oturumunuz sonlandırıldı.", "info")
+        return redirect(url_for("bestsoft_login"))
 
     @app.route("/cart")
     def cart():

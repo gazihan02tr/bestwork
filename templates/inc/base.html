@@ -199,7 +199,18 @@
     <div class="bg-primary text-on-primary text-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
             <div class="flex flex-wrap items-center justify-between gap-5">
-                <span class="font-medium">{{ t('promo_text') }}</span>
+                <div class="flex-1 min-w-0">
+                    {% if global_announcements %}
+                    <div class="flex items-center gap-3 text-sm text-on-primary whitespace-nowrap">
+                        <span class="flex items-center gap-2 bg-white/15 text-on-primary rounded-full px-3 py-1.5 transition-all duration-300" id="announcement-display" data-announcements='{{ global_announcements|tojson|safe }}'>
+                            <span class="material-symbols-outlined text-base">campaign</span>
+                            <span class="announcement-text">{{ global_announcements[0].content }}</span>
+                        </span>
+                    </div>
+                    {% else %}
+                    <span class="font-medium">{{ t('promo_text') }}</span>
+                    {% endif %}
+                </div>
                 <div class="flex items-center gap-6 text-xs tracking-[0.2em] uppercase">
                     <span class="flex items-center gap-1" aria-live="polite">
                         <span class="material-symbols-outlined text-base">schedule</span>
@@ -386,6 +397,31 @@
 
         updateDate();
         setInterval(updateDate, 1000);
+    });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const display = document.getElementById('announcement-display');
+        if (!display) {
+            return;
+        }
+        const announcements = JSON.parse(display.dataset.announcements || '[]');
+        const textSpan = display.querySelector('.announcement-text');
+        if (!announcements.length || !textSpan) {
+            return;
+        }
+        let index = 0;
+
+        const updateDisplay = () => {
+            display.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                index = (index + 1) % announcements.length;
+                textSpan.textContent = announcements[index].content || '';
+                display.classList.remove('opacity-0', 'scale-95');
+            }, 250);
+        };
+
+        setInterval(updateDisplay, 3000);
     });
     </script>
 
