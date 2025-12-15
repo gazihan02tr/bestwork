@@ -13,23 +13,21 @@ from uuid import uuid4
 from werkzeug.utils import secure_filename
 
 from bson import ObjectId
-from bson.errors import InvalidId
 from flask import (
     Flask,
-    abort,
     current_app,
     flash,
     g,
     redirect,
     render_template,
     request,
-    send_from_directory,
     session,
     url_for,
 )
 from pymongo import MongoClient
 from cryptography.fernet import Fernet, InvalidToken
 
+from bestsoft import register_bestsoft_routes
 
 _identity_cipher: Optional[Fernet] = None
 _SYS_RANDOM = random.SystemRandom()
@@ -634,6 +632,17 @@ def register_routes(app: Flask) -> None:
         except (ValueError, TypeError):
             return str(value)
 
+    register_bestsoft_routes(
+        app,
+        dist_dir=BESTSOFT_DIST_DIR,
+        default_locale=DEFAULT_LOCALE,
+        translations=_TRANSLATIONS,
+        set_site_text_value=set_site_text_value,
+        get_site_text_value=get_site_text_value,
+        format_datetime_for_display=format_datetime_for_display,
+        get_identity_cipher=get_identity_cipher,
+    )
+
     def parse_datetime(value):
         if isinstance(value, datetime):
             return value
@@ -757,7 +766,29 @@ def register_routes(app: Flask) -> None:
             product_data["id"] = str(product["_id"])
             products.append(product_data)
 
-        return render_template("index.html", products=products)
+        slider_images_cursor = app.db.bestsoft_slider_images.find().sort(
+            [("display_order", 1), ("created_at", -1)]
+        )
+        slider_images: List[Dict[str, Any]] = [
+            {
+                "id": str(doc["_id"]),
+                "url": url_for("static", filename=f"uploads/slider/{doc['filename']}"),
+            }
+            for doc in slider_images_cursor
+        ]
+
+        transition_value = get_site_text_value(app, "slider_transition_seconds", "default") or "6.5"
+        try:
+            slider_transition_seconds = max(1.0, float(transition_value))
+        except (TypeError, ValueError):
+            slider_transition_seconds = 6.5
+
+        return render_template(
+            "index.html",
+            products=products,
+            slider_images=slider_images,
+            slider_transition_seconds=slider_transition_seconds,
+        )
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
@@ -1856,207 +1887,6 @@ def register_routes(app: Flask) -> None:
     def login():
         return _render_login_view("auth/login.html")
 
-    @app.route("/bestsoft", methods=["GET", "POST"])
-    def bestsoft_login():
-        next_url = request.args.get("next") or request.form.get("next") or url_for("bestsoft_landing")
-        identifier = request.args.get("identifier", "")
-
-        if request.method == "POST":
-            identifier = request.form.get("identifier", "").strip()
-            password = request.form.get("password", "")
-
-            if not identifier or not password:
-                flash("Kullanıcı ID ve şifre zorunludur.", "warning")
-                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
-
-            user_hash = hashlib.sha256(identifier.encode("utf-8")).hexdigest()
-            record = app.db.managements.find_one({"user_id_hash": user_hash})
-            if not record:
-                flash("Geçersiz kullanıcı ID veya şifre.", "error")
-                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
-
-            cipher = get_identity_cipher()
-            try:
-                stored_user_id = cipher.decrypt(record["user_id_encrypted"].encode("utf-8")).decode("utf-8")
-                stored_password = cipher.decrypt(record["password_encrypted"].encode("utf-8")).decode("utf-8")
-            except (InvalidToken, KeyError, AttributeError, ValueError):
-                flash("Yönetici bilgileri çözümlenemedi. Lütfen tekrar deneyin.", "error")
-                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
-
-            if stored_user_id != identifier or stored_password != password:
-                flash("Geçersiz kullanıcı ID veya şifre.", "error")
-                return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
-
-            session["management_entry_id"] = str(record["_id"])
-            session["management_user_id"] = stored_user_id
-            flash("BestSoft portalına hoş geldiniz.", "success")
-            return redirect(next_url)
-
-        return render_template("bestsoft/login.html", identifier=identifier, next=next_url)
-
-    @app.route("/bestwork")
-    @app.route("/bestwork/")
-    def bestsoft_landing():
-        if not session.get("management_entry_id"):
-            flash("Lütfen önce BestSoft hesabınızla giriş yapın.", "warning")
-            return redirect(url_for("bestsoft_login"))
-
-        index_path = os.path.join(BESTSOFT_DIST_DIR, "index.html")
-        if os.path.isfile(index_path):
-            return redirect(url_for("bestsoft_dist", filename="index.html"))
-
-        return render_template("bestsoft/index.html")
-
-    def _require_management_session(next_endpoint: str):
-        if not session.get("management_entry_id"):
-            flash("Lütfen önce BestSoft hesabınızla giriş yapın.", "warning")
-            return redirect(url_for("bestsoft_login", next=url_for(next_endpoint)))
-        return None
-
-    @app.route("/bestwork/announcements", methods=["GET", "POST"])
-    def bestsoft_announcements():
-        redirect_response = _require_management_session("bestsoft_announcements")
-        if redirect_response:
-            return redirect_response
-        promo_locale = "default"
-
-        if request.method == "POST":
-            form_type = request.form.get("form_type") or "announcement"
-            if form_type == "promo_text":
-                content = request.form.get("promo_content", "").strip()
-                if not content:
-                    return redirect(url_for("bestsoft_announcements"))
-                set_site_text_value(
-                    app,
-                    "promo_text",
-                    promo_locale,
-                    content,
-                    {"updated_by": session.get("management_user_id")},
-                )
-                return redirect(url_for("bestsoft_announcements"))
-
-            content = request.form.get("content", "").strip()
-            if not content:
-                return redirect(url_for("bestsoft_announcements"))
-            now = datetime.utcnow()
-            app.db.bestsoft_announcements.insert_one(
-                {
-                    "content": content,
-                    "created_at": now,
-                    "updated_at": now,
-                    "created_by": session.get("management_user_id"),
-                }
-            )
-            return redirect(url_for("bestsoft_announcements"))
-
-        announcements_cursor = app.db.bestsoft_announcements.find().sort("created_at", -1)
-        announcements = [
-            {
-                "id": str(doc["_id"]),
-                "content": doc.get("content", ""),
-                "created_at_display": format_datetime_for_display(doc.get("created_at")),
-                "updated_at_display": format_datetime_for_display(doc.get("updated_at")),
-            }
-            for doc in announcements_cursor
-        ]
-        promo_text_value = get_site_text_value(app, "promo_text", promo_locale)
-        if not promo_text_value:
-            promo_text_value = _TRANSLATIONS.get(DEFAULT_LOCALE, {}).get("promo_text")
-        return render_template(
-            "bestsoft/announcements.html",
-            announcements=announcements,
-            promo_text_value=promo_text_value,
-        )
-
-    @app.route("/bestwork/announcements/<announcement_id>/update", methods=["POST"])
-    def update_announcement(announcement_id: str):
-        redirect_response = _require_management_session("bestsoft_announcements")
-        if redirect_response:
-            return redirect_response
-
-        content = request.form.get("content", "").strip()
-        if not content:
-            return redirect(url_for("bestsoft_announcements"))
-
-        try:
-            announcement_oid = ObjectId(announcement_id)
-        except (InvalidId, TypeError):
-            flash("Geçersiz duyuru kaydı.", "error")
-            return redirect(url_for("bestsoft_announcements"))
-
-        result = app.db.bestsoft_announcements.update_one(
-            {"_id": announcement_oid},
-            {"$set": {"content": content, "updated_at": datetime.utcnow()}},
-        )
-        return redirect(url_for("bestsoft_announcements"))
-
-    @app.route("/bestwork/announcements/<announcement_id>/delete", methods=["POST"])
-    def delete_announcement(announcement_id: str):
-        redirect_response = _require_management_session("bestsoft_announcements")
-        if redirect_response:
-            return redirect_response
-
-        try:
-            announcement_oid = ObjectId(announcement_id)
-        except (InvalidId, TypeError):
-            flash("Geçersiz duyuru kaydı.", "error")
-            return redirect(url_for("bestsoft_announcements"))
-
-        result = app.db.bestsoft_announcements.delete_one({"_id": announcement_oid})
-        return redirect(url_for("bestsoft_announcements"))
-
-    @app.route("/bestwork/<path:filename>")
-    def bestsoft_dist(filename: str):
-        if not session.get("management_entry_id"):
-            abort(403)
-
-        safe_path = os.path.normpath(filename)
-        if safe_path.startswith(".."):
-            abort(404)
-
-        target_path = os.path.join(BESTSOFT_DIST_DIR, safe_path)
-        if not os.path.isfile(target_path):
-            abort(404)
-
-        return send_from_directory(BESTSOFT_DIST_DIR, safe_path)
-
-    @app.route("/managements/setup", methods=["GET", "POST"])
-    def management_setup():
-        form_state = {"user_id": ""}
-
-        if request.method == "POST":
-            user_id = request.form.get("user_id", "").strip()
-            password = request.form.get("password", "")
-            form_state["user_id"] = user_id
-
-            if not user_id or not password:
-                flash("Kullanıcı ID ve şifre zorunludur.", "warning")
-                return render_template("managements_setup.html", form_state=form_state)
-
-            user_id_hash = hashlib.sha256(user_id.encode("utf-8")).hexdigest()
-            existing = app.db.managements.find_one({"user_id_hash": user_id_hash})
-            if existing:
-                flash("Bu kullanıcı ID'si için zaten bir yönetici kaydı mevcut.", "warning")
-                return render_template("managements_setup.html", form_state=form_state)
-
-            cipher = get_identity_cipher()
-            encrypted_user_id = cipher.encrypt(user_id.encode("utf-8")).decode("utf-8")
-            encrypted_password = cipher.encrypt(password.encode("utf-8")).decode("utf-8")
-
-            app.db.managements.insert_one(
-                {
-                    "user_id_hash": user_id_hash,
-                    "user_id_encrypted": encrypted_user_id,
-                    "password_encrypted": encrypted_password,
-                    "created_at": datetime.utcnow(),
-                }
-            )
-
-            flash("Yönetici kaydı oluşturuldu.", "success")
-            return redirect(url_for("management_setup"))
-
-        return render_template("managements_setup.html", form_state=form_state)
-
     @app.route("/forgot-password", methods=["GET", "POST"])
     def forgot_password():
         identifier = ""
@@ -2073,21 +1903,11 @@ def register_routes(app: Flask) -> None:
 
         return render_template("auth/forgot_password.html", identifier=identifier)
 
-    def _clear_bestsoft_session():
-        session.pop("management_entry_id", None)
-        session.pop("management_user_id", None)
-
     @app.route("/logout")
     def logout():
         session.clear()
         flash("Güvenli çıkış yapıldı.", "info")
         return redirect(url_for("index"))
-
-    @app.route("/bestsoft/logout")
-    def bestsoft_logout():
-        _clear_bestsoft_session()
-        flash("BestSoft oturumunuz sonlandırıldı.", "info")
-        return redirect(url_for("bestsoft_login"))
 
     @app.route("/cart")
     def cart():

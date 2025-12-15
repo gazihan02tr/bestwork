@@ -5,19 +5,19 @@
 {% endblock %}
 {% block content %}
 <div class="space-y-6">
-   <div class="bg-white border border-neutral-tertiary/30 rounded-xl shadow-sm p-6">
-      <h1 class="text-2xl font-semibold text-heading mb-4 flex items-center gap-2">
-         <span class="material-symbols-outlined text-blue-600">campaign</span>
+   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition-colors duration-300">
+      <h1 class="text-2xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+         <span class="material-symbols-outlined text-blue-600 dark:text-indigo-300">campaign</span>
          Duyuru Yönetimi
       </h1>
       <form method="post" action="{{ url_for('bestsoft_announcements') }}" class="space-y-4">
          <input type="hidden" name="form_type" value="announcement">
          <div>
-            <label for="announcement-content" class="block text-sm font-medium text-neutral-tertiary mb-1">Yeni duyuru</label>
-            <textarea id="announcement-content" name="content" rows="3" class="w-full rounded-lg border border-neutral-tertiary/40 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm p-3" placeholder="Duyuru metnini yazın..." required></textarea>
+            <label for="announcement-content" class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Yeni duyuru</label>
+            <textarea id="announcement-content" name="content" rows="3" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900/40 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm p-3 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition" placeholder="Duyuru metnini yazın..." required></textarea>
          </div>
          <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-600 text-white hover:bg-violet-500 transition-colors shadow-sm">
                <span class="material-symbols-outlined text-base">add_circle</span>
                Kaydet
             </button>
@@ -25,37 +25,37 @@
       </form>
    </div>
 
-   <div class="bg-white border border-neutral-tertiary/30 rounded-xl shadow-sm p-6">
+   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition-colors duration-300">
       <div class="flex flex-col gap-2 mb-4">
-         <h2 class="text-xl font-semibold text-heading">Kayıtlı Duyurular</h2>
-         <p class="text-sm text-neutral-tertiary">Metni düzenleyebilir veya kaydı silebilirsiniz.</p>
+         <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Kayıtlı Duyurular</h2>
+         <p class="text-sm text-slate-500 dark:text-slate-400">Metni düzenleyebilir veya kaydı silebilirsiniz.</p>
       </div>
       {% if announcements %}
       <div class="space-y-4">
          {% for announcement in announcements %}
-         <div class="border border-neutral-tertiary/30 rounded-lg p-4 space-y-3">
+         <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3 bg-white/80 dark:bg-slate-900/30">
             <form method="post" action="{{ url_for('update_announcement', announcement_id=announcement.id) }}" class="flex flex-col gap-3 md:flex-row md:items-center">
                <label class="sr-only" for="announcement-{{ announcement.id }}">Duyuru</label>
-               <input id="announcement-{{ announcement.id }}" name="content" type="text" value="{{ announcement.content }}" class="flex-1 rounded-lg border border-neutral-tertiary/40 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm p-2.5" required>
-               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20 transition-colors text-sm self-start">
+               <input id="announcement-{{ announcement.id }}" name="content" type="text" value="{{ announcement.content }}" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900/40 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm p-2.5 text-slate-800 dark:text-slate-100" required>
+               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-amber-500/10 dark:bg-amber-400/20 text-amber-700 dark:text-amber-200 border border-amber-500/30 dark:border-amber-400/40 hover:bg-amber-500/20 dark:hover:bg-amber-400/30 transition-colors text-sm self-start">
                   <span class="material-symbols-outlined text-base">edit</span>
                   Güncelle
                </button>
             </form>
             <form method="post" action="{{ url_for('delete_announcement', announcement_id=announcement.id) }}">
-               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-red-500/10 text-red-700 border border-red-500/30 hover:bg-red-500/20 transition-colors text-sm">
+               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-200 border border-red-500/30 dark:border-red-500/40 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors text-sm">
                   <span class="material-symbols-outlined text-base">delete</span>
                   Sil
                </button>
             </form>
-            <div class="text-xs text-neutral-tertiary">
+            <div class="text-xs text-slate-500 dark:text-slate-400">
                Güncellendi: {{ announcement.updated_at_display or announcement.created_at_display or "—" }}
             </div>
          </div>
          {% endfor %}
       </div>
       {% else %}
-      <p class="text-sm text-neutral-tertiary">Henüz duyuru bulunmuyor.</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Henüz duyuru bulunmuyor.</p>
       {% endif %}
    </div>
 </div>

@@ -3,3 +3,4 @@ pymongo
 Werkzeug
 cryptography
 python-dotenv
+Pillow

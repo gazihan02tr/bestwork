@@ -1,0 +1,135 @@
+{% extends "bestsoft/inc/base.html" %}
+{% block title %}Slider Yönetimi{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition">
+        <h1 class="text-2xl font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <span class="material-symbols-outlined text-violet-600 dark:text-indigo-300">slideshow</span>
+            Slider Yönetimi
+        </h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+            En fazla {{ max_images }} adet görsel yükleyebilirsiniz. Şu anda {{ current_count }} adet kayıt bulunuyor.
+        </p>
+        {% if current_count < max_images %}
+        <form method="post" enctype="multipart/form-data" class="mt-5 space-y-4">
+            <input type="hidden" name="form_type" value="upload">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni slider görseli yükleyin</label>
+                <input type="file" name="image" accept=".png,.jpg,.jpeg,.webp,.gif" required
+                       class="block w-full text-sm text-slate-500 dark:text-slate-200 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-900 dark:file:text-slate-200">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Önerilen boyut 1920x650 px. Yüklenen görseller otomatik olarak WEBP formatına dönüştürülür.
+                </p>
+            </div>
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-violet-600 text-white font-semibold shadow hover:bg-violet-500 transition">
+                <span class="material-symbols-outlined text-base">cloud_upload</span>
+                Yükle
+            </button>
+        </form>
+        {% else %}
+        <div class="mt-4 text-sm text-amber-600 dark:text-amber-300">
+            Maksimum görsel sayısına ulaştınız. Lütfen yeni görsel yüklemeden önce mevcut görsellerden birini silin.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Slider Ayarları</h2>
+        </div>
+        <form method="post" class="space-y-4">
+            <input type="hidden" name="form_type" value="transition">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Geçiş Süresi (saniye)</label>
+                <input
+                    type="number"
+                    name="transition_seconds"
+                    step="0.1"
+                    min="1"
+                    max="30"
+                    value="{{ '%.2f'|format(transition_seconds) }}"
+                    class="w-32 rounded-full border border-slate-200 dark:border-slate-600 px-4 py-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                    required
+                >
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">1–30 sn arasında bir değer belirleyebilirsiniz.</p>
+            </div>
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-500 transition">
+                <span class="material-symbols-outlined text-base">schedule</span>
+                Geçiş Süresini Kaydet
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Gösterim Sırası</h2>
+            <span class="text-sm text-slate-500 dark:text-slate-400">{{ slider_images|length }} kayıt</span>
+        </div>
+        {% if slider_images %}
+        <form method="post" class="space-y-4">
+            <input type="hidden" name="form_type" value="ordering">
+            <div class="space-y-3">
+                {% for image in slider_images %}
+                <div class="flex items-center gap-4 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50">
+                    <div class="w-20 h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img src="{{ image.url }}" alt="{{ image.original_name }}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ image.original_name }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Şu anki sıra: {{ image.display_order }}</p>
+                    </div>
+                    <input type="hidden" name="image_ids[]" value="{{ image.id }}">
+                    <input
+                        type="number"
+                        name="orders[]"
+                        value="{{ image.display_order }}"
+                        min="1"
+                        max="999"
+                        class="w-20 rounded-full border border-slate-200 dark:border-slate-600 px-3 py-2 bg-white dark:bg-slate-900 text-center text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                        required
+                    >
+                </div>
+                {% endfor %}
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 text-white font-semibold shadow hover:bg-violet-500 transition">
+                    <span class="material-symbols-outlined text-base">save</span>
+                    Sıralamayı Güncelle
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-sm text-slate-500 dark:text-slate-400">Güncellenecek görsel bulunmuyor.</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Yüklenmiş Slider Görselleri</h2>
+            <span class="text-sm text-slate-500 dark:text-slate-400">{{ slider_images|length }} kayıt</span>
+        </div>
+
+        {% if slider_images %}
+        <div class="grid gap-6 md:grid-cols-2">
+            {% for image in slider_images %}
+            <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white/80 dark:bg-slate-900/50 shadow-sm">
+                <img src="{{ image.url }}" alt="{{ image.original_name }}" class="w-full h-48 object-cover">
+                <div class="p-4 space-y-2">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ image.original_name }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Yüklendi: {{ image.created_at_display or "—" }}</p>
+                    <form method="post" action="{{ url_for('delete_slider_image', image_id=image.id) }}" onsubmit="return confirm('Bu görseli silmek istediğinizden emin misiniz?');">
+                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-sm hover:bg-red-100 dark:bg-red-500/10 dark:border-red-500/40 dark:text-red-200 transition">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                            Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-500 dark:text-slate-400">Henüz slider görseli yüklenmemiş.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
