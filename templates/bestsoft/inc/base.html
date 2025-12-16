@@ -60,29 +60,42 @@
 </div>
 {% set bestsoft_flash_messages = get_flashed_messages(with_categories=True) %}
 {% if bestsoft_flash_messages %}
-<div class="fixed top-5 right-5 space-y-3 z-[100]">
-    {% for category, message in bestsoft_flash_messages %}
-    {% set base_color = "bg-emerald-500" %}
-    {% if category == "error" %}
-        {% set base_color = "bg-red-500" %}
-    {% elif category == "warning" %}
-        {% set base_color = "bg-amber-500" %}
-    {% elif category == "info" %}
-        {% set base_color = "bg-sky-500" %}
-    {% endif %}
-    <div class="bestsoft-toast flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-white {{ base_color }} bg-opacity-90 backdrop-blur transition-opacity duration-500">
-        <span class="material-symbols-outlined text-xl">notifications</span>
-        <span class="text-sm font-medium">{{ message }}</span>
-    </div>
-    {% endfor %}
-</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    setTimeout(() => {
-        document.querySelectorAll(".bestsoft-toast").forEach((toast) => {
-            toast.classList.add("opacity-0");
-            setTimeout(() => toast.remove(), 600);
+    document.addEventListener('DOMContentLoaded', function () {
+        const configMap = {
+            success: { icon: 'success', title: 'Başarılı' },
+            error: { icon: 'error', title: 'Hata' },
+            warning: { icon: 'warning', title: 'Uyarı' },
+            info: { icon: 'info', title: 'Bilgi' },
+            default: { icon: 'question', title: 'Bilgi' },
+        };
+        const messages = {{ bestsoft_flash_messages|tojson|safe }};
+        if (!messages.length) return;
+        const showAlert = ([category, message]) => {
+            const conf = configMap[category] || configMap.default;
+            return Swal.fire({
+                icon: conf.icon,
+                title: conf.title,
+                text: message,
+                background: '#fbf6ff',
+                color: '#2b0c66',
+                customClass: {
+                    popup: 'swal2-purple-popup',
+                    title: 'swal2-purple-title',
+                },
+                showConfirmButton: false,
+                showCloseButton: true,
+                timer: 2500,
+                timerProgressBar: true,
+                allowOutsideClick: true,
+            });
+        };
+        let chain = Promise.resolve();
+        messages.forEach(msg => {
+            chain = chain.then(() => showAlert(msg));
         });
-    }, 2500);
+    });
 </script>
 {% endif %}
 <script>
