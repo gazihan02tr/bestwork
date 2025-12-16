@@ -38,12 +38,12 @@
         {% set slider_items = slider_images if slider_images is defined else [] %}
         {% if slider_items %}
         <div class="leader-slider relative mx-auto w-full" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
-            <div class="absolute inset-0 -z-10 flex items-center justify-center">
+            <div class="absolute inset-0 -z-10 flex justify-center items-center">
                 <img
-                    data-slider-ambient
+                    id="ambilight-bg"
                     src=""
-                    alt="Ambilight arka plan"
                     class="w-full h-full object-cover blur-[100px] scale-110 opacity-60 saturate-[3] transition-all duration-700 ease-in-out"
+                    alt="Ambilight Glow"
                 >
             </div>
             <div class="slider-shell relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
@@ -91,24 +91,24 @@
         const slider = document.querySelector("[data-leader-slider]");
         if (!slider) return;
         const track = slider.querySelector("[data-slider-track]");
-        const slides = Array.from(track?.querySelectorAll("img") || []);
-        const ambient = slider.querySelector("[data-slider-ambient]");
+        const slideImages = Array.from(track?.querySelectorAll("img") || []);
+        const ambilightBg = document.getElementById("ambilight-bg");
         const prevBtn = slider.querySelector("[data-slider-prev]");
         const nextBtn = slider.querySelector("[data-slider-next]");
         const dotsWrap = slider.querySelector("[data-slider-dots]");
         const dots = Array.from(dotsWrap?.querySelectorAll(".dot") || []);
-        if (!slides.length) return;
+        if (!slideImages.length) return;
 
         const intervalSeconds = parseFloat(slider.dataset.sliderInterval || "6.5");
         const transitionIntervalMs = Math.max(intervalSeconds, 1) * 1000;
-        let index = 0;
+        let currentIndex = 0;
         let autoplay;
-        const totalSlides = slides.length;
+        const totalSlides = slideImages.length;
         const hasMultiple = totalSlides > 1;
 
         function updateDots() {
             dots.forEach((dot, dotIndex) => {
-                if (dotIndex === index) {
+                if (dotIndex === currentIndex) {
                     dot.classList.add("bg-gray-900", "scale-125");
                     dot.classList.remove("bg-gray-400");
                 } else {
@@ -118,24 +118,21 @@
             });
         }
 
-        function updateAmbient() {
-            if (!ambient || !slides[index]) return;
-            ambient.src = slides[index].src;
-        }
-
         function goToSlide(newIndex) {
-            index = (newIndex + totalSlides) % totalSlides;
-            track.style.transform = `translateX(-${index * 100}%)`;
-            updateAmbient();
+            currentIndex = (newIndex + totalSlides) % totalSlides;
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            if (ambilightBg && slideImages[currentIndex]) {
+                ambilightBg.src = slideImages[currentIndex].src;
+            }
             updateDots();
         }
 
         function nextSlide() {
-            goToSlide(index + 1);
+            goToSlide(currentIndex + 1);
         }
 
         function prevSlide() {
-            goToSlide(index - 1);
+            goToSlide(currentIndex - 1);
         }
 
         function restartAutoplay() {
@@ -151,7 +148,9 @@
             });
         });
 
-        updateAmbient();
+        if (ambilightBg && slideImages[0]) {
+            ambilightBg.src = slideImages[0].src;
+        }
         updateDots();
         if (hasMultiple) {
             autoplay = setInterval(nextSlide, transitionIntervalMs);
