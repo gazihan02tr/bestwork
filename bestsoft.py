@@ -48,6 +48,62 @@ def register_bestsoft_routes(
     slider_max_images = 10
     slider_settings_locale = "default"
 
+    branding_upload_dir = os.path.join(app.root_path, "static", "uploads", "branding")
+    os.makedirs(branding_upload_dir, exist_ok=True)
+    branding_allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
+    branding_settings_locale = "default"
+    default_brand_color = "#7C3AED"
+    default_site_description = "60 yılı aşkın deneyimle premium yaşam ürünleri sunuyoruz."
+    default_contact_email = "info@amway.com.tr"
+    default_contact_address = "İstanbul, Türkiye"
+    default_contact_phone = "0850 222 00 00"
+    default_security_band_items = [
+        {
+            "key": 1,
+            "icon": "local_shipping",
+            "title": "Ücretsiz Kargo",
+            "description": "500 TL ve üzeri tüm siparişlerinizde",
+        },
+        {
+            "key": 2,
+            "icon": "verified_user",
+            "title": "Memnuniyet Garantisi",
+            "description": "180 gün içinde koşulsuz iade",
+        },
+        {
+            "key": 3,
+            "icon": "support_agent",
+            "title": "7/24 Destek",
+            "description": "Uzman ekibimiz her zaman yanınızda",
+        },
+    ]
+
+    def _load_security_band_items(locale: str):
+        items = []
+        for defaults in default_security_band_items:
+            idx = defaults["key"]
+            icon_value = get_site_text_value(app, f"security_band_{idx}_icon", locale) or defaults["icon"]
+            title_value = get_site_text_value(app, f"security_band_{idx}_title", locale) or defaults["title"]
+            description_value = (
+                get_site_text_value(app, f"security_band_{idx}_description", locale) or defaults["description"]
+            )
+            items.append(
+                {
+                    "index": idx,
+                    "icon": icon_value,
+                    "title": title_value,
+                    "description": description_value,
+                }
+            )
+        return items
+    social_defaults = {
+        "facebook": "#",
+        "instagram": "#",
+        "twitter": "#",
+        "linkedin": "#",
+        "youtube": "#",
+    }
+
     def _allowed_slider_file(filename: str) -> bool:
         return "." in filename and filename.rsplit(".", 1)[1].lower() in slider_allowed_extensions
 
@@ -73,6 +129,53 @@ def register_bestsoft_routes(
         except Exception:
             return None
         return dest_name
+
+    def _allowed_branding_file(filename: str) -> bool:
+        return "." in filename and filename.rsplit(".", 1)[1].lower() in branding_allowed_extensions
+
+    def _save_branding_image(upload) -> Optional[str]:
+        if not upload or not upload.filename:
+            return None
+        if not _allowed_branding_file(upload.filename):
+            return None
+        upload.stream.seek(0)
+        try:
+            image = Image.open(upload.stream)
+        except Exception:
+            return None
+
+        export_image = image.convert("RGBA") if image.mode not in ("RGB", "RGBA") else image.copy()
+        max_dimension = 1200
+        width, height = export_image.size
+        largest_side = max(width, height)
+        if largest_side > max_dimension:
+            scale = max_dimension / largest_side
+            export_image = export_image.resize((int(width * scale), int(height * scale)))
+
+        dest_name = f"{uuid4().hex}.png"
+        dest_path = os.path.join(branding_upload_dir, dest_name)
+        try:
+            export_image.save(dest_path, format="PNG")
+        except Exception:
+            return None
+        return dest_name
+
+    def _normalize_brand_color(value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        candidate = value.strip()
+        if not candidate:
+            return None
+        if not candidate.startswith("#"):
+            candidate = f"#{candidate}"
+        if len(candidate) != 7:
+            return None
+        hex_part = candidate[1:]
+        try:
+            int(hex_part, 16)
+        except ValueError:
+            return None
+        return candidate.upper()
 
     def _clear_bestsoft_session() -> None:
         session.pop("management_entry_id", None)
@@ -227,6 +330,213 @@ def register_bestsoft_routes(
 
         app.db.bestsoft_announcements.delete_one({"_id": announcement_oid})
         return redirect(url_for("bestsoft_announcements"))
+
+    @app.route("/bestwork/site-info", methods=["GET", "POST"])
+    def bestsoft_site_info():
+        redirect_response = _require_management_session("bestsoft_site_info")
+        if redirect_response:
+            return redirect_response
+
+        site_name_value = get_site_text_value(app, "site_name", branding_settings_locale)
+        default_site_name = translations.get(default_locale, {}).get("site_name") or "BestWork"
+        if not site_name_value:
+            site_name_value = default_site_name
+        primary_logo_value = get_site_text_value(app, "site_logo_primary", branding_settings_locale) or ""
+        footer_logo_value = get_site_text_value(app, "site_logo_footer", branding_settings_locale) or ""
+        color_value = get_site_text_value(app, "site_primary_color", branding_settings_locale)
+        site_color_value = _normalize_brand_color(color_value) or default_brand_color
+        description_value = (
+            get_site_text_value(app, "site_description", branding_settings_locale)
+            or default_site_description
+        )
+        contact_email_value = (
+            get_site_text_value(app, "site_contact_email", branding_settings_locale)
+            or default_contact_email
+        )
+        contact_address_value = (
+            get_site_text_value(app, "site_contact_address", branding_settings_locale)
+            or default_contact_address
+        )
+        contact_phone_value = (
+            get_site_text_value(app, "site_contact_phone", branding_settings_locale)
+            or default_contact_phone
+        )
+        social_links = {}
+        for network, default_url in social_defaults.items():
+            social_links[network] = (
+                get_site_text_value(app, f"site_social_{network}", branding_settings_locale)
+                or default_url
+            )
+
+        if request.method == "POST":
+            metadata = {"updated_by": session.get("management_user_id")}
+            updates = []
+            site_name = (request.form.get("site_name") or "").strip()
+            if site_name:
+                set_site_text_value(app, "site_name", branding_settings_locale, site_name, metadata)
+                site_name_value = site_name
+                updates.append("Site adı güncellendi.")
+
+            brand_color_input = request.form.get("site_primary_color", "")
+            normalized_color = _normalize_brand_color(brand_color_input)
+            if normalized_color:
+                set_site_text_value(
+                    app,
+                    "site_primary_color",
+                    branding_settings_locale,
+                    normalized_color,
+                    metadata,
+                )
+                site_color_value = normalized_color
+                updates.append("Marka rengi güncellendi.")
+            elif brand_color_input.strip():
+                flash("Lütfen 6 haneli geçerli bir renk kodu seçin.", "warning")
+
+            site_description = (request.form.get("site_description") or "").strip()
+            if site_description:
+                set_site_text_value(
+                    app,
+                    "site_description",
+                    branding_settings_locale,
+                    site_description,
+                    metadata,
+                )
+                description_value = site_description
+                updates.append("Açıklama güncellendi.")
+
+            contact_email = (request.form.get("site_contact_email") or "").strip()
+            if contact_email:
+                set_site_text_value(
+                    app,
+                    "site_contact_email",
+                    branding_settings_locale,
+                    contact_email,
+                    metadata,
+                )
+                contact_email_value = contact_email
+                updates.append("İletişim maili güncellendi.")
+
+            contact_address = (request.form.get("site_contact_address") or "").strip()
+            if contact_address:
+                set_site_text_value(
+                    app,
+                    "site_contact_address",
+                    branding_settings_locale,
+                    contact_address,
+                    metadata,
+                )
+                contact_address_value = contact_address
+                updates.append("Adres güncellendi.")
+
+            contact_phone = (request.form.get("site_contact_phone") or "").strip()
+            if contact_phone:
+                set_site_text_value(
+                    app,
+                    "site_contact_phone",
+                    branding_settings_locale,
+                    contact_phone,
+                    metadata,
+                )
+                contact_phone_value = contact_phone
+                updates.append("Telefon numarası güncellendi.")
+
+            for network in social_defaults.keys():
+                field_name = f"site_social_{network}"
+                value = (request.form.get(field_name) or "").strip()
+                if value:
+                    set_site_text_value(
+                        app,
+                        field_name,
+                        branding_settings_locale,
+                        value,
+                        metadata,
+                    )
+                    social_links[network] = value
+                else:
+                    social_links[network] = ""
+
+            primary_logo_upload = request.files.get("primary_logo")
+            if primary_logo_upload and primary_logo_upload.filename:
+                saved_primary = _save_branding_image(primary_logo_upload)
+                if not saved_primary:
+                    flash("Ana logo yüklenemedi. PNG, JPG, JPEG, GIF veya WEBP dosyası yükleyin.", "error")
+                else:
+                    stored_value = f"uploads/branding/{saved_primary}"
+                    set_site_text_value(app, "site_logo_primary", branding_settings_locale, stored_value, metadata)
+                    primary_logo_value = stored_value
+                    updates.append("Ana logo güncellendi.")
+
+            footer_logo_upload = request.files.get("footer_logo")
+            if footer_logo_upload and footer_logo_upload.filename:
+                saved_footer = _save_branding_image(footer_logo_upload)
+                if not saved_footer:
+                    flash("Footer logosu yüklenemedi. PNG, JPG, JPEG, GIF veya WEBP dosyası yükleyin.", "error")
+                else:
+                    stored_value = f"uploads/branding/{saved_footer}"
+                    set_site_text_value(app, "site_logo_footer", branding_settings_locale, stored_value, metadata)
+                    footer_logo_value = stored_value
+                    updates.append("Footer logosu güncellendi.")
+
+            if updates:
+                flash(" ".join(updates), "success")
+            else:
+                flash("Herhangi bir değişiklik algılanmadı.", "info")
+            return redirect(url_for("bestsoft_site_info"))
+
+        def _logo_url(value: str) -> Optional[str]:
+            if not value:
+                return None
+            return url_for("static", filename=value)
+
+        return render_template(
+            "bestsoft/site_info.html",
+            site_name_value=site_name_value,
+            primary_logo_url=_logo_url(primary_logo_value),
+            footer_logo_url=_logo_url(footer_logo_value),
+            primary_logo_value=primary_logo_value,
+            footer_logo_value=footer_logo_value,
+            site_color_value=site_color_value,
+            default_brand_color=default_brand_color,
+            site_description_value=description_value,
+            site_contact_email_value=contact_email_value,
+            site_contact_address_value=contact_address_value,
+            site_contact_phone_value=contact_phone_value,
+            site_social_links=social_links,
+        )
+
+    @app.route("/bestwork/security-band", methods=["GET", "POST"])
+    def bestsoft_security_band():
+        redirect_response = _require_management_session("bestsoft_security_band")
+        if redirect_response:
+            return redirect_response
+
+        items = _load_security_band_items(branding_settings_locale)
+        if request.method == "POST":
+            updates = 0
+            metadata = {"updated_by": session.get("management_user_id")}
+            for item in items:
+                idx = item["index"]
+                icon_field = (request.form.get(f"item_{idx}_icon") or "").strip() or item["icon"]
+                title_field = (request.form.get(f"item_{idx}_title") or "").strip() or item["title"]
+                desc_field = (request.form.get(f"item_{idx}_description") or "").strip() or item["description"]
+                set_site_text_value(app, f"security_band_{idx}_icon", branding_settings_locale, icon_field, metadata)
+                set_site_text_value(app, f"security_band_{idx}_title", branding_settings_locale, title_field, metadata)
+                set_site_text_value(
+                    app,
+                    f"security_band_{idx}_description",
+                    branding_settings_locale,
+                    desc_field,
+                    metadata,
+                )
+                item["icon"] = icon_field
+                item["title"] = title_field
+                item["description"] = desc_field
+                updates += 1
+            if updates:
+                flash("Güvenlik bandı bilgileri güncellendi.", "success")
+            return redirect(url_for("bestsoft_security_band"))
+
+        return render_template("bestsoft/eticaret_bandi.html", band_items=items)
 
     @app.route("/bestwork/slider", methods=["GET", "POST"])
     def bestsoft_slider():

@@ -1,0 +1,258 @@
+{% extends "bestsoft/inc/base.html" %}
+{% block title %}E-Ticaret Bilgileri{% endblock %}
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
+{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm p-6 sm:p-8 transition space-y-8">
+        <div class="flex flex-col gap-2 border-b border-slate-200 dark:border-slate-700 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-200 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">storefront</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">E-Ticaret Bilgileri</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Marka kimliği, iletişim ve medya içeriklerini tek ekrandan yönetin.</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
+            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-200 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">palette</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Marka Kimliği</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Site adı, marka rengi ve açıklama içeriğini düzenleyin.</p>
+                    </div>
+                </div>
+                <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
+                    <div>
+                        <label for="site_name" class="flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <span>Site Adı</span>
+                            <span class="text-xs text-slate-400">Ziyaretçilere gösterilir</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="site_name"
+                            name="site_name"
+                            value="{{ site_name_value }}"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            placeholder="Örn. BestWork"
+                        >
+                    </div>
+                    <div>
+                        <label for="site_primary_color" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Marka Rengi</label>
+                        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 px-4 py-3">
+                            <input
+                                type="color"
+                                id="site_primary_color"
+                                name="site_primary_color"
+                                value="{{ site_color_value }}"
+                                class="h-12 w-12 rounded-full border border-slate-200 dark:border-slate-700 cursor-pointer shadow-inner bg-white"
+                                title="Renk seç"
+                            >
+                            <span class="text-sm font-mono tracking-wide text-slate-600 dark:text-slate-300">{{ site_color_value }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="site_description" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                        <span>Site Açıklaması</span>
+                        <span class="text-xs text-slate-400">Footer üzerinde yayınlanır</span>
+                    </label>
+                    <textarea
+                        id="site_description"
+                        name="site_description"
+                        rows="5"
+                        class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                    >{{ site_description_value|e }}</textarea>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-200 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">contact_phone</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">İletişim Bilgileri</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Footer bölümünde sergilenecek tüm iletişim kanallarını güncelleyin.</p>
+                    </div>
+                </div>
+                <div class="grid gap-5 lg:grid-cols-3">
+                    <div>
+                        <label for="site_contact_email" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">E-Posta</label>
+                        <input
+                            type="email"
+                            id="site_contact_email"
+                            name="site_contact_email"
+                            value="{{ site_contact_email_value|e }}"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            placeholder="info@bestwork.com"
+                        >
+                    </div>
+                    <div>
+                        <label for="site_contact_address" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Adres</label>
+                        <textarea
+                            id="site_contact_address"
+                            name="site_contact_address"
+                            rows="3"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            placeholder="İstanbul, Türkiye"
+                        >{{ site_contact_address_value|e }}</textarea>
+                    </div>
+                    <div>
+                        <label for="site_contact_phone" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Telefon</label>
+                        <input
+                            type="text"
+                            id="site_contact_phone"
+                            name="site_contact_phone"
+                            value="{{ site_contact_phone_value|e }}"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            placeholder="+90 850 222 00 00"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-200 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">share</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Sosyal Medya</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Boş bırakılan platformlar sitede görüntülenmez.</p>
+                    </div>
+                </div>
+                <div class="grid gap-5 md:grid-cols-2">
+                    {% set social_fields = [
+                        ('facebook', 'Facebook', 'https://facebook.com/bestwork'),
+                        ('instagram', 'Instagram', 'https://instagram.com/bestwork'),
+                        ('twitter', 'Twitter', 'https://twitter.com/bestwork'),
+                        ('linkedin', 'LinkedIn', 'https://linkedin.com/company/bestwork'),
+                        ('youtube', 'YouTube', 'https://youtube.com/@bestwork')
+                    ] %}
+                    {% for key, label, placeholder in social_fields %}
+                    <div>
+                        <label for="site_social_{{ key }}" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ label }} URL</label>
+                        <input
+                            type="url"
+                            id="site_social_{{ key }}"
+                            name="site_social_{{ key }}"
+                            value="{{ site_social_links[key]|e if site_social_links[key] != '#' else '' }}"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
+                            placeholder="{{ placeholder }}"
+                        >
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-200 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">image</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Logo & Medya</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Ana ve footer logolarını yönetebilirsiniz. Yeni yüklemeler mevcut logoların yerini alır.</p>
+                    </div>
+                </div>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div class="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/70 dark:bg-slate-900/30">
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base text-violet-500 dark:text-violet-300">branding_watermark</span>
+                            Ana Logo
+                        </p>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <input
+                                type="file"
+                                name="primary_logo"
+                                id="primary-logo-input"
+                                accept=".png,.jpg,.jpeg,.gif,.webp"
+                                class="sr-only"
+                                data-file-input
+                                data-file-label="#primary-logo-name"
+                            >
+                            <label
+                                for="primary-logo-input"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 text-white font-semibold cursor-pointer shadow hover:bg-violet-500 transition"
+                            >
+                                <span class="material-symbols-outlined text-base">attach_file</span>
+                                <span>Dosya Seç</span>
+                            </label>
+                            <span id="primary-logo-name" class="text-sm text-slate-500 dark:text-slate-400">Dosya seçilmedi</span>
+                        </div>
+                        {% if primary_logo_url %}
+                        <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/80 flex flex-col gap-2">
+                            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Aktif Logo</span>
+                            <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3">
+                                <img src="{{ primary_logo_url }}" alt="Ana Logo" class="max-h-20 object-contain">
+                            </div>
+                        </div>
+                        {% endif %}
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Önerilen: 300x120 px, şeffaf PNG.</p>
+                    </div>
+                    <div class="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/70 dark:bg-slate-900/30">
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base text-violet-500 dark:text-violet-300">layers</span>
+                            Footer Logosı
+                        </p>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <input
+                                type="file"
+                                name="footer_logo"
+                                id="footer-logo-input"
+                                accept=".png,.jpg,.jpeg,.gif,.webp"
+                                class="sr-only"
+                                data-file-input
+                                data-file-label="#footer-logo-name"
+                            >
+                            <label
+                                for="footer-logo-input"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 text-white font-semibold cursor-pointer shadow hover:bg-violet-500 transition"
+                            >
+                                <span class="material-symbols-outlined text-base">attach_file</span>
+                                <span>Dosya Seç</span>
+                            </label>
+                            <span id="footer-logo-name" class="text-sm text-slate-500 dark:text-slate-400">Dosya seçilmedi</span>
+                        </div>
+                        {% if footer_logo_url %}
+                        <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/80 flex flex-col gap-2">
+                            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Aktif Footer Logosı</span>
+                            <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3">
+                                <img src="{{ footer_logo_url }}" alt="Footer Logosı" class="max-h-20 object-contain">
+                            </div>
+                        </div>
+                        {% endif %}
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Footer için farklı bir logo tercih edebilirsiniz.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-500 transition">
+                    <span class="material-symbols-outlined text-base">save</span>
+                    Bilgileri Güncelle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.CKEDITOR && document.getElementById("site_description")) {
+            CKEDITOR.replace("site_description", {
+                height: 160,
+                removePlugins: "resize",
+            });
+        }
+    });
+</script>
+{% endblock %}

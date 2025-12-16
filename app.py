@@ -56,6 +56,7 @@ DEMO_LOGIN_PASSWORD = "12345"
 _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
         "promo_text": "🎉 Yeni müşterilere özel ilk siparişte %20 indirim",
+        "site_name": "BestWork",
         "help": "Yardım",
         "contact": "İletişim",
         "search_placeholder": "Ürün, kategori veya marka ara...",
@@ -76,6 +77,7 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     "en": {
         "promo_text": "🎉 Enjoy 20% off your first order for new customers!",
+        "site_name": "BestWork",
         "help": "Help",
         "contact": "Contact",
         "search_placeholder": "Search for products, categories, or brands...",
@@ -96,6 +98,7 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     "de": {
         "promo_text": "🎉 20% Rabatt auf Ihre erste Bestellung für Neukunden!",
+        "site_name": "BestWork",
         "help": "Hilfe",
         "contact": "Kontakt",
         "search_placeholder": "Produkte, Kategorien oder Marken suchen...",
@@ -116,6 +119,7 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     "ru": {
         "promo_text": "🎉 Скидка 20% на первый заказ для новых клиентов!",
+        "site_name": "BestWork",
         "help": "Помощь",
         "contact": "Контакты",
         "search_placeholder": "Поиск товаров, категорий или брендов...",
@@ -136,6 +140,7 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     "bg": {
         "promo_text": "🎉 20% отстъпка за първа поръчка за нови клиенти!",
+        "site_name": "BestWork",
         "help": "Помощ",
         "contact": "Контакт",
         "search_placeholder": "Търсене на продукти, категории или марки...",
@@ -155,6 +160,38 @@ _TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "alert_default": "Инфо",
     },
 }
+DEFAULT_BRAND_COLOR = "#7C3AED"
+DEFAULT_SITE_DESCRIPTION = "60 yılı aşkın deneyimle premium yaşam ürünleri sunuyoruz."
+DEFAULT_CONTACT_EMAIL = "info@amway.com.tr"
+DEFAULT_CONTACT_ADDRESS = "İstanbul, Türkiye"
+DEFAULT_CONTACT_PHONE = "0850 222 00 00"
+DEFAULT_SOCIAL_LINKS = {
+    "facebook": "#",
+    "instagram": "#",
+    "twitter": "#",
+    "linkedin": "#",
+    "youtube": "#",
+}
+DEFAULT_SECURITY_BAND = [
+    {
+        "key": 1,
+        "icon": "local_shipping",
+        "title": "Ücretsiz Kargo",
+        "description": "500 TL ve üzeri tüm siparişlerinizde",
+    },
+    {
+        "key": 2,
+        "icon": "verified_user",
+        "title": "Memnuniyet Garantisi",
+        "description": "180 gün içinde koşulsuz iade",
+    },
+    {
+        "key": 3,
+        "icon": "support_agent",
+        "title": "7/24 Destek",
+        "description": "Uzman ekibimiz her zaman yanınızda",
+    },
+]
 
 
 def _fetch_site_setting(app: Flask, key: str, locale: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -169,6 +206,36 @@ def _fetch_site_setting(app: Flask, key: str, locale: Optional[str]) -> Optional
     if doc:
         return doc
     return None
+
+
+def _normalize_brand_color_value(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    candidate = value.strip()
+    if not candidate:
+        return None
+    if not candidate.startswith("#"):
+        candidate = f"#{candidate}"
+    if len(candidate) != 7:
+        return None
+    try:
+        int(candidate[1:], 16)
+    except ValueError:
+        return None
+    return candidate.upper()
+
+
+def _brand_color_rgb(value: str) -> str:
+    cleaned = (value or "").lstrip("#")
+    if len(cleaned) != 6:
+        cleaned = DEFAULT_BRAND_COLOR.lstrip("#")
+    try:
+        r = int(cleaned[0:2], 16)
+        g = int(cleaned[2:4], 16)
+        b = int(cleaned[4:6], 16)
+    except ValueError:
+        r, g, b = (124, 58, 237)
+    return f"{r}, {g}, {b}"
 
 
 def get_site_text_value(app: Flask, key: str, locale: str) -> Optional[str]:
@@ -468,7 +535,67 @@ def register_db_helpers(app: Flask) -> None:
                 announcements.append({"id": str(doc["_id"]), "content": doc.get("content", "")})
         except Exception:
             announcements = []
-        return {"current_user": current_user, "cart_count": cart_count, "global_announcements": announcements}
+        locale = getattr(g, "locale", DEFAULT_LOCALE)
+        fallback_translations = _TRANSLATIONS.get(locale) or _TRANSLATIONS.get(DEFAULT_LOCALE, {})
+        default_site_name = fallback_translations.get("site_name") or "BestWork"
+        site_name_value = get_site_text_value(app, "site_name", locale) or default_site_name
+        default_logo_path = "logo.png"
+        logo_primary_value = get_site_text_value(app, "site_logo_primary", "default") or default_logo_path
+        footer_logo_raw = get_site_text_value(app, "site_logo_footer", "default")
+        logo_footer_value = footer_logo_raw or logo_primary_value
+        footer_logo_present = bool(footer_logo_raw)
+        color_value = get_site_text_value(app, "site_primary_color", "default")
+        brand_color_value = _normalize_brand_color_value(color_value) or DEFAULT_BRAND_COLOR
+        brand_color_rgb = _brand_color_rgb(brand_color_value)
+        site_description_value = get_site_text_value(app, "site_description", "default") or DEFAULT_SITE_DESCRIPTION
+        contact_email_value = get_site_text_value(app, "site_contact_email", "default") or DEFAULT_CONTACT_EMAIL
+        contact_address_value = get_site_text_value(app, "site_contact_address", "default") or DEFAULT_CONTACT_ADDRESS
+        contact_phone_value = get_site_text_value(app, "site_contact_phone", "default") or DEFAULT_CONTACT_PHONE
+        social_links: Dict[str, str] = {}
+        for network, default_url in DEFAULT_SOCIAL_LINKS.items():
+            social_links[network] = get_site_text_value(app, f"site_social_{network}", "default") or default_url
+        security_band_items = []
+        for defaults in DEFAULT_SECURITY_BAND:
+            idx = defaults["key"]
+            item_icon = get_site_text_value(app, f"security_band_{idx}_icon", "default") or defaults["icon"]
+            item_title = get_site_text_value(app, f"security_band_{idx}_title", "default") or defaults["title"]
+            item_desc = (
+                get_site_text_value(app, f"security_band_{idx}_description", "default") or defaults["description"]
+            )
+            security_band_items.append(
+                {
+                    "icon": item_icon,
+                    "title": item_title,
+                    "description": item_desc,
+                }
+            )
+
+        def _logo_url(value: str) -> str:
+            filename = value or default_logo_path
+            return url_for("static", filename=filename)
+
+        site_branding = {
+            "site_name": site_name_value,
+            "logo_primary_path": logo_primary_value,
+            "logo_footer_path": logo_footer_value,
+            "logo_primary_url": _logo_url(logo_primary_value),
+            "logo_footer_url": _logo_url(logo_footer_value),
+            "footer_logo_present": footer_logo_present,
+            "primary_color": brand_color_value,
+            "primary_color_rgb": brand_color_rgb,
+            "description": site_description_value,
+            "contact_email": contact_email_value,
+            "contact_address": contact_address_value,
+            "contact_phone": contact_phone_value,
+            "social_links": social_links,
+            "security_band": security_band_items,
+        }
+        return {
+            "current_user": current_user,
+            "cart_count": cart_count,
+            "global_announcements": announcements,
+            "site_branding": site_branding,
+        }
 
 
 def login_required(view):

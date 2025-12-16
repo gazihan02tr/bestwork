@@ -4,12 +4,20 @@
     {{ super() }}
     <style>
         .leader-slider {
-            width: min(100%, 1600px);
+            width: min(80%, 1400px);
         }
 
         .leader-slider .slider-shell {
             aspect-ratio: 32 / 11;
             min-height: 420px;
+        }
+
+        .leader-slider .slider-viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 1rem;
         }
 
         @media (max-width: 1024px) {
@@ -37,7 +45,7 @@
     <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-6 relative z-10">
         {% set slider_items = slider_images if slider_images is defined else [] %}
         {% if slider_items %}
-        <div class="leader-slider relative mx-auto w-full" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
+        <div class="leader-slider relative mx-auto" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
             <div class="absolute inset-0 -z-10 flex justify-center items-center">
                 <img
                     id="ambilight-bg"
@@ -46,16 +54,23 @@
                     alt="Ambilight Glow"
                 >
             </div>
-            <div class="slider-shell relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
-                <div class="slides flex h-full w-full transition-transform duration-500 ease-out" data-slider-track data-index="0">
-                    {% for image in slider_items %}
-                    <img
-                        class="h-full w-full flex-shrink-0 object-cover"
-                        src="{{ image.url }}"
-                        alt="Slider görseli {{ loop.index }}"
-                        loading="lazy"
-                    >
-                    {% endfor %}
+            <div class="slider-shell relative w-full">
+                <div class="slider-viewport overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
+                    <div class="slides flex h-full w-full transition-transform duration-500 ease-out" data-slider-track data-index="0">
+                        {% for image in slider_items %}
+                        <img
+                            class="h-full w-full flex-shrink-0 object-cover"
+                            src="{{ image.url }}"
+                            alt="Slider görseli {{ loop.index }}"
+                            loading="lazy"
+                        >
+                        {% endfor %}
+                    </div>
+                    <div class="dots absolute bottom-4 flex w-full justify-center gap-2" data-slider-dots>
+                        {% for image in slider_items %}
+                        <span class="dot h-2 w-2 rounded-full bg-gray-400 cursor-pointer transition-all border border-white/20" data-dot-index="{{ loop.index0 }}"></span>
+                        {% endfor %}
+                    </div>
                 </div>
                 <button
                     type="button"
@@ -69,11 +84,6 @@
                     data-slider-next
                     aria-label="Sonraki slayt"
                 >&#10095;</button>
-                <div class="dots absolute bottom-4 flex w-full justify-center gap-2" data-slider-dots>
-                    {% for image in slider_items %}
-                    <span class="dot h-2 w-2 rounded-full bg-gray-400 cursor-pointer transition-all border border-white/20" data-dot-index="{{ loop.index0 }}"></span>
-                    {% endfor %}
-                </div>
             </div>
         </div>
         {% else %}
@@ -176,10 +186,6 @@
         });
     });
 </script>
-
-
-
-
 
 <!-- Categories Section -->
     <section class="py-12 sm:py-16 lg:py-20">
@@ -312,41 +318,31 @@
         </div>
     </section>
 
+    {% set band_items = site_branding.security_band %}
+    {% if band_items %}
     <!-- Benefits Section -->
     <section class="py-12 sm:py-16 lg:py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-                
-                <!-- Benefit 1 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-container rounded-full mb-4">
-                        <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+                {% set palettes = [
+                    {'bg': 'bg-primary-container', 'text': 'text-primary'},
+                    {'bg': 'bg-secondary-container', 'text': 'text-secondary'},
+                    {'bg': 'bg-tertiary-container', 'text': 'text-tertiary'}
+                ] %}
+                {% for item in band_items %}
+                {% set palette = palettes[loop.index0 % palettes|length] %}
+                <div class="text-center rounded-2xl border border-outline-variant bg-white/80 p-6 shadow-sm">
+                    <div class="inline-flex items-center justify-center w-16 h-16 {{ palette.bg }} rounded-full mb-4">
+                        <span class="material-symbols-outlined {{ palette.text }} text-3xl">{{ item.icon }}</span>
                     </div>
-                    <h3 class="text-xl font-medium mb-2">Ücretsiz Kargo</h3>
-                    <p class="text-on-surface-variant">500 TL ve üzeri tüm siparişlerinizde</p>
+                    <h3 class="text-xl font-medium mb-2">{{ item.title }}</h3>
+                    <p class="text-on-surface-variant">{{ item.description }}</p>
                 </div>
-
-                <!-- Benefit 2 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-secondary-container rounded-full mb-4">
-                        <span class="material-symbols-outlined text-secondary text-3xl">verified_user</span>
-                    </div>
-                    <h3 class="text-xl font-medium mb-2">Memnuniyet Garantisi</h3>
-                    <p class="text-on-surface-variant">180 gün içinde koşulsuz iade</p>
-                </div>
-
-                <!-- Benefit 3 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-tertiary-container rounded-full mb-4">
-                        <span class="material-symbols-outlined text-tertiary text-3xl">support_agent</span>
-                    </div>
-                    <h3 class="text-xl font-medium mb-2">7/24 Destek</h3>
-                    <p class="text-on-surface-variant">Uzman ekibimiz her zaman yanınızda</p>
-                </div>
-
+                {% endfor %}
             </div>
         </div>
     </section>
+    {% endif %}
 
     <!-- Newsletter Section -->
     <section class="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-primary via-purple-600 to-purple-700 text-white relative overflow-hidden">

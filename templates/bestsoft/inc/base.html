@@ -120,5 +120,61 @@
         });
     })();
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[data-file-input]").forEach((input) => {
+            const targetSelector = input.getAttribute("data-file-label");
+            if (!targetSelector) {
+                return;
+            }
+            const target = document.querySelector(targetSelector);
+            if (!target) {
+                return;
+            }
+            const defaultText = target.textContent || "Dosya seçilmedi";
+            input.addEventListener("change", () => {
+                const files = input.files;
+                if (files && files.length) {
+                    target.textContent = files.length === 1 ? files[0].name : `${files.length} dosya seçildi`;
+                } else {
+                    target.textContent = defaultText;
+                }
+            });
+        });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggle = document.getElementById("ecommerce-menu-toggle");
+        const menu = document.getElementById("ecommerce-menu");
+        if (!toggle || !menu) {
+            return;
+        }
+        const storageKey = "bestsoftEcommerceMenuOpen";
+        let isOpen = true;
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored === "false") {
+                isOpen = false;
+            }
+        } catch (error) {
+            isOpen = true;
+        }
+        const applyState = (open) => {
+            menu.classList.toggle("hidden", !open);
+            toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        };
+        applyState(isOpen);
+        toggle.addEventListener("click", () => {
+            isOpen = !isOpen;
+            try {
+                localStorage.setItem(storageKey, isOpen ? "true" : "false");
+            } catch (error) {
+                /* ignore storage errors */
+            }
+            applyState(isOpen);
+        });
+    });
+</script>
 </body>
 </html>

@@ -1,0 +1,55 @@
+{% extends "bestsoft/inc/base.html" %}
+{% block title %}E-Ticaret Güvenlik Bandı{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm p-6 sm:p-8 transition space-y-6">
+        <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">workspace_premium</span>
+            </div>
+            <div>
+                <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">E-Ticaret Güvenlik Bandı</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Mağaza vitrininizde yer alan güven veren mesajları ve ikonları düzenleyin. İkonlar Google Material Symbols isimlerini kullanır.</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-5">
+            <div class="grid gap-5 lg:grid-cols-3">
+                {% for item in band_items %}
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-xl">{{ item.icon }}</span>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-slate-400">Bant {{ item.index }}</p>
+                            <p class="text-base font-semibold text-slate-900 dark:text-white">{{ item.title }}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block" for="item_{{ item.index }}_icon">İkon</label>
+                            <input type="text" id="item_{{ item.index }}_icon" name="item_{{ item.index }}_icon" value="{{ item.icon }}" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500" placeholder="Örn. support_agent">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block" for="item_{{ item.index }}_title">Başlık</label>
+                            <input type="text" id="item_{{ item.index }}_title" name="item_{{ item.index }}_title" value="{{ item.title }}" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500" placeholder="Başlık">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block" for="item_{{ item.index }}_description">Açıklama</label>
+                            <textarea id="item_{{ item.index }}_description" name="item_{{ item.index }}_description" rows="3" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500">{{ item.description }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-500 transition">
+                    <span class="material-symbols-outlined text-base">save</span>
+                    Güvenlik Bandını Güncelle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
