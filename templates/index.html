@@ -9,41 +9,44 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-6 relative z-10">
         {% set slider_items = slider_images if slider_images is defined else [] %}
         {% if slider_items %}
-        <div class="relative" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
-            <div
-                class="slider-ambient pointer-events-none absolute inset-0 -z-10 opacity-0 transition duration-700 ease-out flex items-center justify-center"
-                data-slider-ambient
-            >
-                <div class="slider-ambient__glow w-[96%] h-[96%] rounded-[42px] blur-[75px]" data-slider-ambient-glow></div>
+        <div class="relative mx-auto w-[min(835px,95vw)]" style="aspect-ratio: 835 / 420" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
+            <div class="absolute inset-0 -z-10 flex items-center justify-center">
+                <img
+                    data-slider-ambient
+                    src=""
+                    alt="Ambilight arka plan"
+                    class="w-full h-full object-cover blur-[100px] scale-110 opacity-60 saturate-[3] transition-all duration-700 ease-in-out"
+                >
             </div>
-            <div class="overflow-hidden rounded-[30px] min-h-[320px] sm:min-h-[420px]" data-slider-surface>
-                <div class="flex transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)]" data-slider-track>
+            <div class="slider-shell relative h-full w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
+                <div class="slides flex h-full w-full transition-transform duration-500 ease-out" data-slider-track data-index="0">
                     {% for image in slider_items %}
-                    <article class="w-full flex-shrink-0 px-4 sm:px-3 py-3 relative">
-                        <figure class="rounded-[30px] overflow-hidden h-[300px] sm:h-[420px] lg:h-[500px]">
-                            <img src="{{ image.url }}" alt="Slider görseli {{ loop.index }}" class="w-full h-full object-cover" loading="lazy">
-                        </figure>
-                    </article>
+                    <img
+                        class="h-full w-full flex-shrink-0 object-cover"
+                        src="{{ image.url }}"
+                        alt="Slider görseli {{ loop.index }}"
+                        loading="lazy"
+                    >
+                    {% endfor %}
+                </div>
+                <button
+                    type="button"
+                    class="prev absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 backdrop-blur-md p-3 text-gray-900 shadow-lg hover:bg-white hover:scale-110 transition"
+                    data-slider-prev
+                    aria-label="Önceki slayt"
+                >&#10094;</button>
+                <button
+                    type="button"
+                    class="next absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 backdrop-blur-md p-3 text-gray-900 shadow-lg hover:bg-white hover:scale-110 transition"
+                    data-slider-next
+                    aria-label="Sonraki slayt"
+                >&#10095;</button>
+                <div class="dots absolute bottom-4 flex w-full justify-center gap-2" data-slider-dots>
+                    {% for image in slider_items %}
+                    <span class="dot h-2 w-2 rounded-full bg-gray-400 cursor-pointer transition-all border border-white/20" data-dot-index="{{ loop.index0 }}"></span>
                     {% endfor %}
                 </div>
             </div>
-            <button
-                type="button"
-                class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-slate-900 shadow-xl border border-white/40 hover:scale-105 transition"
-                data-slider-prev
-                aria-label="Önceki slayt"
-            >
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <button
-                type="button"
-                class="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-slate-900 shadow-xl border border-white/40 hover:scale-105 transition"
-                data-slider-next
-                aria-label="Sonraki slayt"
-            >
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            <div class="flex items-center justify-center gap-2 mt-4" data-slider-dots></div>
         </div>
         {% else %}
         <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/80 py-16 flex items-center justify-center text-center">
@@ -60,98 +63,43 @@
         const slider = document.querySelector("[data-leader-slider]");
         if (!slider) return;
         const track = slider.querySelector("[data-slider-track]");
-        const slides = Array.from(track.children);
+        const slides = Array.from(track?.querySelectorAll("img") || []);
         const ambient = slider.querySelector("[data-slider-ambient]");
-        const ambientGlow = slider.querySelector("[data-slider-ambient-glow]");
         const prevBtn = slider.querySelector("[data-slider-prev]");
         const nextBtn = slider.querySelector("[data-slider-next]");
         const dotsWrap = slider.querySelector("[data-slider-dots]");
-        if (!slides.length) {
-            return;
-        }
+        const dots = Array.from(dotsWrap?.querySelectorAll(".dot") || []);
+        if (!slides.length) return;
+
         const intervalSeconds = parseFloat(slider.dataset.sliderInterval || "6.5");
         const transitionIntervalMs = Math.max(intervalSeconds, 1) * 1000;
-        const fallbackColor = { r: 18, g: 22, b: 36 };
-        const slideColors = new Array(slides.length).fill(null);
         let index = 0;
         let autoplay;
-        const hasMultiple = slides.length > 1;
+        const totalSlides = slides.length;
+        const hasMultiple = totalSlides > 1;
 
-        function applyAmbientColor(color) {
-            if (!ambient || !ambientGlow) return;
-            const source = color || fallbackColor;
-            const { r, g, b } = source;
-            ambientGlow.style.background = `
-                radial-gradient(circle at 8% 15%, rgba(${r}, ${g}, ${b}, 0.55), transparent 55%),
-                radial-gradient(circle at 92% 14%, rgba(${r}, ${g}, ${b}, 0.55), transparent 55%),
-                radial-gradient(circle at 50% 96%, rgba(${r}, ${g}, ${b}, 0.5), transparent 65%),
-                radial-gradient(circle at 50% 50%, rgba(${r}, ${g}, ${b}, 0.35), transparent 70%)
-            `;
-            ambientGlow.style.boxShadow = `
-                0 45px 85px rgba(${r}, ${g}, ${b}, 0.25),
-                0 0 140px rgba(${r}, ${g}, ${b}, 0.45)
-            `;
-            ambientGlow.style.opacity = "0.9";
-            ambient.style.opacity = "1";
+        function updateDots() {
+            dots.forEach((dot, dotIndex) => {
+                if (dotIndex === index) {
+                    dot.classList.add("bg-gray-900", "scale-125");
+                    dot.classList.remove("bg-gray-400");
+                } else {
+                    dot.classList.remove("bg-gray-900", "scale-125");
+                    dot.classList.add("bg-gray-400");
+                }
+            });
         }
 
-        function extractColor(img, slideIndex) {
-            if (!img) return;
-            const canvas = document.createElement("canvas");
-            const maxDim = 64;
-            const width = img.naturalWidth || maxDim;
-            const height = img.naturalHeight || maxDim;
-            const scale = Math.min(maxDim / width, maxDim / height, 1);
-            canvas.width = Math.max(1, Math.floor(width * scale));
-            canvas.height = Math.max(1, Math.floor(height * scale));
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            try {
-                const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let r = 0;
-                let g = 0;
-                let b = 0;
-                let count = 0;
-                const step = 4 * Math.max(1, Math.floor(data.length / 2000));
-                for (let i = 0; i < data.length; i += step) {
-                    r += data[i];
-                    g += data[i + 1];
-                    b += data[i + 2];
-                    count++;
-                }
-                if (!count) return;
-                slideColors[slideIndex] = {
-                    r: Math.round(r / count),
-                    g: Math.round(g / count),
-                    b: Math.round(b / count),
-                };
-                if (slideIndex === index) {
-                    applyAmbientColor(slideColors[slideIndex]);
-                }
-            } catch (error) {
-                console.warn("Renk örneklenemedi:", error);
-            }
+        function updateAmbient() {
+            if (!ambient || !slides[index]) return;
+            ambient.src = slides[index].src;
         }
-
-        slides.forEach((slide, slideIndex) => {
-            const img = slide.querySelector("img");
-            if (!img) return;
-            if (img.complete) {
-                extractColor(img, slideIndex);
-            } else {
-                img.addEventListener("load", () => extractColor(img, slideIndex), {
-                    once: true,
-                });
-            }
-        });
-        applyAmbientColor(slideColors[index]);
 
         function goToSlide(newIndex) {
-            index = (newIndex + slides.length) % slides.length;
+            index = (newIndex + totalSlides) % totalSlides;
             track.style.transform = `translateX(-${index * 100}%)`;
+            updateAmbient();
             updateDots();
-            applyAmbientColor(slideColors[index]);
         }
 
         function nextSlide() {
@@ -162,47 +110,20 @@
             goToSlide(index - 1);
         }
 
-        function buildDots() {
-            if (!dotsWrap) return;
-            dotsWrap.innerHTML = "";
-            if (!hasMultiple) {
-                dotsWrap.classList.add("opacity-0", "pointer-events-none");
-                return;
-            }
-            dotsWrap.classList.remove("opacity-0", "pointer-events-none");
-            slides.forEach((_, slideIndex) => {
-                const dot = document.createElement("button");
-                dot.type = "button";
-                dot.className = "w-3 h-3 rounded-full bg-white/40 hover:bg-white transition";
-                dot.setAttribute("aria-label", `Slayt ${slideIndex + 1}`);
-                dot.addEventListener("click", () => {
-                    goToSlide(slideIndex);
-                    restartAutoplay();
-                });
-                dotsWrap.appendChild(dot);
-            });
-        }
-
-        function updateDots() {
-            if (!dotsWrap || !hasMultiple) return;
-            dotsWrap.querySelectorAll("button").forEach((dot, dotIndex) => {
-                if (dotIndex === index) {
-                    dot.classList.add("bg-white");
-                    dot.classList.remove("bg-white/40");
-                } else {
-                    dot.classList.remove("bg-white");
-                    dot.classList.add("bg-white/40");
-                }
-            });
-        }
-
         function restartAutoplay() {
             if (!hasMultiple) return;
             clearInterval(autoplay);
             autoplay = setInterval(nextSlide, transitionIntervalMs);
         }
 
-        buildDots();
+        dots.forEach((dot, dotIndex) => {
+            dot.addEventListener("click", () => {
+                goToSlide(dotIndex);
+                restartAutoplay();
+            });
+        });
+
+        updateAmbient();
         updateDots();
         if (hasMultiple) {
             autoplay = setInterval(nextSlide, transitionIntervalMs);
@@ -221,14 +142,10 @@
         });
 
         slider.addEventListener("mouseenter", () => {
-            if (hasMultiple) {
-                clearInterval(autoplay);
-            }
+            if (hasMultiple) clearInterval(autoplay);
         });
         slider.addEventListener("mouseleave", () => {
-            if (hasMultiple) {
-                restartAutoplay();
-            }
+            if (hasMultiple) restartAutoplay();
         });
     });
 </script>
