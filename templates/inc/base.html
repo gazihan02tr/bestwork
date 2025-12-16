@@ -199,7 +199,7 @@
     <div class="bg-primary text-on-primary text-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
             <div class="flex flex-wrap items-center justify-between gap-5">
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 hidden sm:block">
                     {% if global_announcements %}
                     <div class="flex items-center gap-3 text-sm text-on-primary whitespace-nowrap">
                         <span class="flex items-center gap-2 bg-white/15 text-on-primary rounded-full px-3 py-1.5 transition-all duration-300" id="announcement-display" data-announcements='{{ global_announcements|tojson|safe }}'>

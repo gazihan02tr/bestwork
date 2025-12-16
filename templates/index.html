@@ -2,14 +2,42 @@
 {% block title %}Index{% endblock %}
 {% block head %}
     {{ super() }}
+    <style>
+        .leader-slider {
+            width: min(100%, 1600px);
+        }
+
+        .leader-slider .slider-shell {
+            aspect-ratio: 32 / 11;
+            min-height: 420px;
+        }
+
+        @media (max-width: 1024px) {
+            .leader-slider .slider-shell {
+                aspect-ratio: 16 / 9;
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .leader-slider .slider-shell {
+                aspect-ratio: 4 / 3;
+            }
+        }
+
+        .leader-slider .slides,
+        .leader-slider .slides img {
+            height: 100%;
+        }
+    </style>
 {% endblock %}
 {% block content %}
         <!-- Hero Section -->
 <section class="bg-white text-slate-900 relative overflow-hidden">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-6 relative z-10">
+    <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-6 relative z-10">
         {% set slider_items = slider_images if slider_images is defined else [] %}
         {% if slider_items %}
-        <div class="relative mx-auto w-[min(835px,95vw)]" style="aspect-ratio: 835 / 420" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
+        <div class="leader-slider relative mx-auto w-full" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
             <div class="absolute inset-0 -z-10 flex items-center justify-center">
                 <img
                     data-slider-ambient
@@ -18,7 +46,7 @@
                     class="w-full h-full object-cover blur-[100px] scale-110 opacity-60 saturate-[3] transition-all duration-700 ease-in-out"
                 >
             </div>
-            <div class="slider-shell relative h-full w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
+            <div class="slider-shell relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
                 <div class="slides flex h-full w-full transition-transform duration-500 ease-out" data-slider-track data-index="0">
                     {% for image in slider_items %}
                     <img
