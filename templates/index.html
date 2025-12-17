@@ -4,12 +4,18 @@
     {{ super() }}
     <style>
         .leader-slider {
-            width: min(80%, 1400px);
+            width: 100%;
         }
 
         .leader-slider .slider-shell {
-            aspect-ratio: 32 / 11;
-            min-height: 420px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            overflow: hidden;
+            border-radius: 1rem;
+            background-color: #ffffff;
         }
 
         .leader-slider .slider-viewport {
@@ -17,43 +23,31 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            border-radius: 1rem;
+            border-radius: inherit;
+            background-color: transparent;
         }
 
-        @media (max-width: 1024px) {
-            .leader-slider .slider-shell {
-                aspect-ratio: 16 / 9;
-                min-height: auto;
-            }
+        .leader-slider .slides {
+            height: 100%;
+            border-radius: inherit;
         }
 
-        @media (max-width: 640px) {
-            .leader-slider .slider-shell {
-                aspect-ratio: 4 / 3;
-            }
-        }
-
-        .leader-slider .slides,
         .leader-slider .slides img {
             height: 100%;
+            width: 100%;
+            object-fit: cover;
+            border-radius: inherit;
+            background-color: #ffffff;
         }
     </style>
 {% endblock %}
 {% block content %}
         <!-- Hero Section -->
 <section class="bg-white text-slate-900 relative overflow-hidden">
-    <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-6 relative z-10">
+    <div class="w-full max-w-none mx-auto px-[2%] py-6 sm:py-6 relative z-10 bg-white">
         {% set slider_items = slider_images if slider_images is defined else [] %}
         {% if slider_items %}
         <div class="leader-slider relative mx-auto" data-leader-slider data-slider-interval="{{ slider_transition_seconds|default(6.5) }}">
-            <div class="absolute inset-0 -z-10 flex justify-center items-center">
-                <img
-                    id="ambilight-bg"
-                    src=""
-                    class="w-full h-full object-cover blur-[100px] scale-110 opacity-60 saturate-[3] transition-all duration-700 ease-in-out"
-                    alt="Ambilight Glow"
-                >
-            </div>
             <div class="slider-shell relative w-full">
                 <div class="slider-viewport overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/10">
                     <div class="slides flex h-full w-full transition-transform duration-500 ease-out" data-slider-track data-index="0">
@@ -102,7 +96,6 @@
         if (!slider) return;
         const track = slider.querySelector("[data-slider-track]");
         const slideImages = Array.from(track?.querySelectorAll("img") || []);
-        const ambilightBg = document.getElementById("ambilight-bg");
         const prevBtn = slider.querySelector("[data-slider-prev]");
         const nextBtn = slider.querySelector("[data-slider-next]");
         const dotsWrap = slider.querySelector("[data-slider-dots]");
@@ -131,9 +124,6 @@
         function goToSlide(newIndex) {
             currentIndex = (newIndex + totalSlides) % totalSlides;
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            if (ambilightBg && slideImages[currentIndex]) {
-                ambilightBg.src = slideImages[currentIndex].src;
-            }
             updateDots();
         }
 
@@ -158,9 +148,6 @@
             });
         });
 
-        if (ambilightBg && slideImages[0]) {
-            ambilightBg.src = slideImages[0].src;
-        }
         updateDots();
         if (hasMultiple) {
             autoplay = setInterval(nextSlide, transitionIntervalMs);
