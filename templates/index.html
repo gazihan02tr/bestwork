@@ -1,5 +1,5 @@
 {% extends "inc/base.html" %}
-{% block title %}Index{% endblock %}
+{% block title %}Ana Sayfa{% endblock %}
 {% block head %}
     {{ super() }}
     <style>
@@ -305,6 +305,93 @@
         </div>
     </section>
 
+    {% set certificate_items = certificate_images if certificate_images is defined else [] %}
+    {% if certificate_items %}
+    <!-- Certificates Section -->
+    <section id="sertifikalar" class="py-12 sm:py-16 lg:py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <p class="text-sm uppercase tracking-[0.32em] text-primary font-semibold">SERTİFİKALAR</p>
+            </div>
+            <div class="relative pb-12" data-cert-slider>
+                <button
+                    type="button"
+                    class="absolute -top-6 right-14 flex items-center justify-center w-10 h-10 rounded-full bg-white text-slate-700 border border-outline shadow hover:bg-slate-50 transition z-10"
+                    aria-label="Önceki sertifikalar"
+                    data-cert-prev
+                >
+                    <span class="material-symbols-outlined text-lg">chevron_left</span>
+                </button>
+                <button
+                    type="button"
+                    class="absolute -top-6 right-2 flex items-center justify-center w-10 h-10 rounded-full bg-white text-slate-700 border border-outline shadow hover:bg-slate-50 transition z-10"
+                    aria-label="Sonraki sertifikalar"
+                    data-cert-next
+                >
+                    <span class="material-symbols-outlined text-lg">chevron_right</span>
+                </button>
+                <div class="overflow-hidden" data-cert-slider-viewport>
+                    <div class="flex gap-5 transition-transform duration-500 will-change-transform" data-cert-slider-track>
+                        {% for certificate in certificate_items %}
+                        <div class="flex-shrink-0" data-cert-slide>
+                            <button
+                                type="button"
+                                class="w-full group relative overflow-hidden rounded-3xl border border-outline-variant bg-surface shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                                data-certificate-trigger
+                                data-cert-src="{{ certificate.url }}"
+                                data-cert-title="{{ certificate.title }}"
+                                data-cert-alt="{{ certificate.alt_text }}"
+                            >
+                                <img src="{{ certificate.url }}" alt="{{ certificate.alt_text }}" class="w-full h-64 object-cover transition duration-500 group-hover:scale-105">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent opacity-80"></div>
+                                <div class="absolute inset-x-0 bottom-0 p-5 flex items-center justify-between text-left text-white">
+                                    <div>
+                                        <p class="text-sm text-white/70 uppercase tracking-wide">Sertifika</p>
+                                        <h3 class="text-lg font-semibold">{{ certificate.title }}</h3>
+                                    </div>
+                                    <span class="material-symbols-outlined text-3xl opacity-80 group-hover:opacity-100 transition">open_in_full</span>
+                                </div>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="certificate-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 backdrop-blur-sm px-4">
+        <div class="relative w-full max-w-4xl mx-auto rounded-3xl bg-white shadow-2xl overflow-hidden animate-[fadeIn_0.25s_ease-out]">
+            <button type="button" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black transition" data-certificate-close aria-label="Kapat">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div class="p-6 flex flex-col gap-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.3em] text-primary/70 font-semibold">Sertifika</p>
+                        <h3 id="certificate-modal-title" class="text-2xl font-semibold text-slate-900">Sertifika</h3>
+                    </div>
+                </div>
+                <div class="rounded-2xl overflow-hidden border border-outline-variant bg-slate-50">
+                    <img id="certificate-modal-image" src="" alt="Sertifika" class="w-full max-h-[70vh] object-contain bg-slate-900/5">
+                </div>
+                <div class="flex items-center justify-end">
+                    <a
+                        id="certificate-download"
+                        href="#"
+                        download
+                        class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900 text-white font-medium shadow hover:bg-slate-800 transition"
+                        title="Sertifikayı indir"
+                    >
+                        <span class="material-symbols-outlined text-base">download</span>
+                        İndir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% set band_items = site_branding.security_band %}
     {% if band_items %}
     <!-- Benefits Section -->
@@ -355,8 +442,150 @@
         </div>
     </section>
 
-   
+    {% if certificate_items %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sliderRoot = document.querySelector("[data-cert-slider]");
+            const sliderTrack = sliderRoot?.querySelector("[data-cert-slider-track]");
+            const sliderSlides = sliderTrack ? Array.from(sliderTrack.querySelectorAll("[data-cert-slide]")) : [];
+            const prevBtn = sliderRoot?.querySelector("[data-cert-prev]");
+            const nextBtn = sliderRoot?.querySelector("[data-cert-next]");
+            let slidesPerView = 1;
+            let currentIndex = 0;
+            let slideWidth = 0;
+            let sliderGap = 0;
+            let resizeTimeout;
+
+            const setButtonState = (btn, disabled) => {
+                if (!btn) return;
+                btn.disabled = disabled;
+                btn.classList.toggle("opacity-40", disabled);
+                btn.classList.toggle("pointer-events-none", disabled);
+            };
+
+            const updateNavVisibility = () => {
+                if (!sliderSlides.length) return;
+                const shouldShow = sliderSlides.length > slidesPerView;
+                [prevBtn, nextBtn].forEach((btn) => {
+                    if (!btn) return;
+                    btn.classList.toggle("hidden", !shouldShow);
+                });
+            };
+
+            const updateButtons = () => {
+                const maxIndex = Math.max(0, sliderSlides.length - slidesPerView);
+                setButtonState(prevBtn, currentIndex <= 0);
+                setButtonState(nextBtn, currentIndex >= maxIndex);
+            };
+
+            const updateSliderPosition = (skipAnimation = false) => {
+                if (!sliderTrack) return;
+                const offset = currentIndex * (slideWidth + sliderGap);
+                if (skipAnimation) {
+                    const previousTransition = sliderTrack.style.transition;
+                    sliderTrack.style.transition = "none";
+                    sliderTrack.style.transform = `translateX(-${offset}px)`;
+                    requestAnimationFrame(() => {
+                        sliderTrack.style.transition = previousTransition;
+                    });
+                } else {
+                    sliderTrack.style.transform = `translateX(-${offset}px)`;
+                }
+                updateButtons();
+            };
+
+            const measureSlider = () => {
+                if (!sliderRoot || !sliderTrack || !sliderSlides.length) return;
+                const containerWidth = sliderRoot.clientWidth;
+                if (!containerWidth) return;
+                slidesPerView = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 4;
+                const computedStyle = window.getComputedStyle(sliderTrack);
+                const parsedGap = parseFloat(computedStyle.columnGap || computedStyle.gap || "0");
+                sliderGap = Number.isNaN(parsedGap) ? 0 : parsedGap;
+                const usableWidth = containerWidth - sliderGap * Math.max(slidesPerView - 1, 0);
+                slideWidth = usableWidth / slidesPerView;
+                sliderSlides.forEach((slide) => {
+                    slide.style.flex = `0 0 ${slideWidth}px`;
+                    slide.style.maxWidth = `${slideWidth}px`;
+                });
+                const maxIndex = Math.max(0, sliderSlides.length - slidesPerView);
+                currentIndex = Math.min(currentIndex, maxIndex);
+                updateNavVisibility();
+                updateSliderPosition(true);
+            };
+
+            if (sliderRoot && sliderTrack && sliderSlides.length) {
+                measureSlider();
+                window.addEventListener("resize", () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(measureSlider, 150);
+                });
+                prevBtn?.addEventListener("click", () => {
+                    if (currentIndex <= 0) return;
+                    currentIndex -= 1;
+                    updateSliderPosition();
+                });
+                nextBtn?.addEventListener("click", () => {
+                    const maxIndex = Math.max(0, sliderSlides.length - slidesPerView);
+                    if (currentIndex >= maxIndex) return;
+                    currentIndex += 1;
+                    updateSliderPosition();
+                });
+            }
+
+            const modal = document.getElementById("certificate-modal");
+            const modalImage = document.getElementById("certificate-modal-image");
+            const modalTitle = document.getElementById("certificate-modal-title");
+            const downloadLink = document.getElementById("certificate-download");
+            const triggers = document.querySelectorAll("[data-certificate-trigger]");
+            const closeButtons = document.querySelectorAll("[data-certificate-close]");
+
+            if (!modal || !modalImage || !modalTitle || !downloadLink || !triggers.length) {
+                return;
+            }
+            const openModal = (src, title, altText) => {
+                modalImage.src = src;
+                modalImage.alt = altText || title || "Sertifika";
+                modalTitle.textContent = title || "Sertifika";
+                downloadLink.href = src;
+                const normalizedName = (title || "sertifika").trim().replace(/\\s+/g, "_").toLowerCase() || "sertifika";
+                downloadLink.setAttribute("download", `${normalizedName}.webp`);
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                document.body.classList.add("overflow-hidden");
+            };
+
+            const closeModal = () => {
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+                document.body.classList.remove("overflow-hidden");
+            };
+
+            triggers.forEach((trigger) => {
+                trigger.addEventListener("click", () => {
+                    const src = trigger.getAttribute("data-cert-src") || "";
+                    const title = trigger.getAttribute("data-cert-title") || "Sertifika";
+                    const alt = trigger.getAttribute("data-cert-alt") || title;
+                    if (!src) {
+                        return;
+                    }
+                    openModal(src, title, alt);
+                });
+            });
+
+            closeButtons.forEach((btn) => btn.addEventListener("click", closeModal));
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && modal.classList.contains("flex")) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+    {% endif %}
+
 {% endblock %}
-
-
-  

@@ -18,7 +18,7 @@ from flask import (
     session,
     url_for,
 )
-from PIL import Image
+from PIL import Image, ImageOps
 from werkzeug.utils import secure_filename
 
 
@@ -48,6 +48,11 @@ def register_bestsoft_routes(
     slider_max_images = 10
     slider_settings_locale = "default"
 
+    certificate_upload_dir = os.path.join(app.root_path, "static", "uploads", "certificates")
+    os.makedirs(certificate_upload_dir, exist_ok=True)
+    certificate_allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
+    certificate_max_dimension = 2200
+
     branding_upload_dir = os.path.join(app.root_path, "static", "uploads", "branding")
     os.makedirs(branding_upload_dir, exist_ok=True)
     branding_allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
@@ -57,6 +62,14 @@ def register_bestsoft_routes(
     default_contact_email = "info@amway.com.tr"
     default_contact_address = "İstanbul, Türkiye"
     default_contact_phone = "0850 222 00 00"
+    default_site_name_value = translations.get(default_locale, {}).get("site_name") or "BestWork"
+    contact_page_settings_locale = "default"
+    default_contact_company_name = f"{default_site_name_value} Genel Merkezi"
+    default_corporate_content = """
+    <h2>Kurumsal Değerlerimiz</h2>
+    <p>BestWork, kalite ve güven ilkeleriyle büyüyen global bir yaşam markasıdır. İnovasyonu, insan ve çevre odaklı stratejilerle birleştiririz.</p>
+    <p>Her ürünümüzü sürdürülebilirlik standartlarına uygun geliştirir, iş ortaklıklarımızda şeffaflık ve adaleti esas alırız.</p>
+    """
     default_security_band_items = [
         {
             "key": 1,
@@ -124,6 +137,39 @@ def register_bestsoft_routes(
 
         dest_name = f"{uuid4().hex}.webp"
         dest_path = os.path.join(slider_upload_dir, dest_name)
+        try:
+            export_image.save(dest_path, format="WEBP", quality=90, method=6)
+        except Exception:
+            return None
+        return dest_name
+
+    def _allowed_certificate_file(filename: str) -> bool:
+        return "." in filename and filename.rsplit(".", 1)[1].lower() in certificate_allowed_extensions
+
+    def _save_certificate_image(upload) -> Optional[str]:
+        if not upload or not upload.filename:
+            return None
+        if not _allowed_certificate_file(upload.filename):
+            return None
+        upload.stream.seek(0)
+        try:
+            raw_image = Image.open(upload.stream)
+        except Exception:
+            return None
+
+        export_image = ImageOps.exif_transpose(raw_image)
+        if export_image.mode not in ("RGB", "RGBA"):
+            export_image = export_image.convert("RGB")
+
+        width, height = export_image.size
+        largest_side = max(width, height)
+        if largest_side > certificate_max_dimension:
+            scale = certificate_max_dimension / largest_side
+            target_size = (int(width * scale), int(height * scale))
+            export_image = export_image.resize(target_size, Image.LANCZOS)
+
+        dest_name = f"{uuid4().hex}.webp"
+        dest_path = os.path.join(certificate_upload_dir, dest_name)
         try:
             export_image.save(dest_path, format="WEBP", quality=90, method=6)
         except Exception:
@@ -689,6 +735,217 @@ def register_bestsoft_routes(
                     pass
         flash("Slider görseli silindi.", "success")
         return redirect(url_for("bestsoft_slider"))
+
+    @app.route("/bestwork/certificates", methods=["GET", "POST"])
+    def bestsoft_certificates():
+        redirect_response = _require_management_session("bestsoft_certificates")
+        if redirect_response:
+            return redirect_response
+
+        if request.method == "POST":
+            title = (request.form.get("title") or "").strip()
+            alt_text = (request.form.get("alt_text") or "").strip()
+            upload = request.files.get("image")
+
+            if not upload or not upload.filename:
+                flash("Lütfen yüklemek için bir görsel seçin.", "warning")
+                return redirect(url_for("bestsoft_certificates"))
+
+            saved_name = _save_certificate_image(upload)
+            if not saved_name:
+                allowed_text = ", ".join(sorted(certificate_allowed_extensions))
+                flash(f"Görsel yüklenemedi. Desteklenen formatlar: {allowed_text}", "error")
+                return redirect(url_for("bestsoft_certificates"))
+
+            sanitized_title = title or "Sertifika"
+            sanitized_alt = alt_text or sanitized_title
+
+            app.db.bestsoft_certificates.insert_one(
+                {
+                    "title": sanitized_title,
+                    "alt_text": sanitized_alt,
+                    "filename": saved_name,
+                    "original_name": secure_filename(upload.filename) or saved_name,
+                    "created_at": datetime.utcnow(),
+                    "uploaded_by": session.get("management_user_id"),
+                }
+            )
+            flash("Sertifika görseli eklendi.", "success")
+            return redirect(url_for("bestsoft_certificates"))
+
+        certificate_cursor = app.db.bestsoft_certificates.find().sort([("created_at", -1)])
+        certificates = []
+        for doc in certificate_cursor:
+            filename = doc.get("filename")
+            if not filename:
+                continue
+            certificates.append(
+                {
+                    "id": str(doc["_id"]),
+                    "title": doc.get("title") or "Sertifika",
+                    "alt_text": doc.get("alt_text") or doc.get("title") or "Sertifika",
+                    "url": url_for("static", filename=f"uploads/certificates/{filename}"),
+                    "original_name": doc.get("original_name") or filename,
+                    "created_at_display": format_datetime_for_display(doc.get("created_at")),
+                }
+            )
+
+        allowed_formats = ", ".join(sorted(certificate_allowed_extensions))
+        return render_template(
+            "bestsoft/certificates.html",
+            certificates=certificates,
+            certificate_count=len(certificates),
+            allowed_formats=allowed_formats,
+        )
+
+    @app.route("/bestwork/certificates/<certificate_id>/delete", methods=["POST"])
+    def delete_certificate(certificate_id: str):
+        redirect_response = _require_management_session("bestsoft_certificates")
+        if redirect_response:
+            return redirect_response
+
+        try:
+            certificate_oid = ObjectId(certificate_id)
+        except (InvalidId, TypeError):
+            flash("Geçersiz sertifika kaydı.", "error")
+            return redirect(url_for("bestsoft_certificates"))
+
+        doc = app.db.bestsoft_certificates.find_one({"_id": certificate_oid})
+        if not doc:
+            flash("Sertifika kaydı bulunamadı.", "error")
+            return redirect(url_for("bestsoft_certificates"))
+
+        app.db.bestsoft_certificates.delete_one({"_id": certificate_oid})
+        stored_filename = doc.get("filename")
+        if stored_filename:
+            file_path = os.path.join(certificate_upload_dir, stored_filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+        flash("Sertifika görseli silindi.", "success")
+        return redirect(url_for("bestsoft_certificates"))
+
+    @app.route("/bestwork/contact-page", methods=["GET", "POST"])
+    def bestsoft_contact_page():
+        redirect_response = _require_management_session("bestsoft_contact_page")
+        if redirect_response:
+            return redirect_response
+
+        company_name_value = (
+            get_site_text_value(app, "contact_page_company_name", contact_page_settings_locale)
+            or default_contact_company_name
+        )
+        contact_email_value = (
+            get_site_text_value(app, "contact_page_email", contact_page_settings_locale)
+            or default_contact_email
+        )
+        contact_phone_value = (
+            get_site_text_value(app, "contact_page_phone", contact_page_settings_locale)
+            or default_contact_phone
+        )
+        contact_address_value = (
+            get_site_text_value(app, "contact_page_address", contact_page_settings_locale)
+            or default_contact_address
+        )
+
+        if request.method == "POST":
+            metadata = {"updated_by": session.get("management_user_id")}
+            updates = []
+
+            company_name = (request.form.get("contact_company_name") or "").strip()
+            if company_name:
+                set_site_text_value(
+                    app,
+                    "contact_page_company_name",
+                    contact_page_settings_locale,
+                    company_name,
+                    metadata,
+                )
+                company_name_value = company_name
+                updates.append("Şirket adı güncellendi.")
+
+            contact_email = (request.form.get("contact_page_email") or "").strip()
+            if contact_email:
+                set_site_text_value(
+                    app,
+                    "contact_page_email",
+                    contact_page_settings_locale,
+                    contact_email,
+                    metadata,
+                )
+                contact_email_value = contact_email
+                updates.append("İletişim e-postası güncellendi.")
+
+            contact_phone = (request.form.get("contact_page_phone") or "").strip()
+            if contact_phone:
+                set_site_text_value(
+                    app,
+                    "contact_page_phone",
+                    contact_page_settings_locale,
+                    contact_phone,
+                    metadata,
+                )
+                contact_phone_value = contact_phone
+                updates.append("Telefon bilgisi güncellendi.")
+
+            contact_address = (request.form.get("contact_page_address") or "").strip()
+            if contact_address:
+                set_site_text_value(
+                    app,
+                    "contact_page_address",
+                    contact_page_settings_locale,
+                    contact_address,
+                    metadata,
+                )
+                contact_address_value = contact_address
+                updates.append("Adres güncellendi.")
+
+            if updates:
+                flash(" ".join(updates), "success")
+            else:
+                flash("Lütfen güncellenecek alanları doldurun.", "info")
+
+        return render_template(
+            "bestsoft/contact_page.html",
+            contact_company_name_value=company_name_value,
+            contact_email_value=contact_email_value,
+            contact_phone_value=contact_phone_value,
+            contact_address_value=contact_address_value,
+        )
+
+    @app.route("/bestwork/corporate-page", methods=["GET", "POST"])
+    def bestsoft_corporate_page():
+        redirect_response = _require_management_session("bestsoft_corporate_page")
+        if redirect_response:
+            return redirect_response
+
+        content_value = (
+            get_site_text_value(app, "corporate_page_content", contact_page_settings_locale)
+            or default_corporate_content
+        )
+
+        if request.method == "POST":
+            metadata = {"updated_by": session.get("management_user_id")}
+            content = (request.form.get("corporate_page_content") or "").strip()
+            if content:
+                set_site_text_value(
+                    app,
+                    "corporate_page_content",
+                    contact_page_settings_locale,
+                    content,
+                    metadata,
+                )
+                content_value = content
+                flash("Kurumsal sayfa içeriği güncellendi.", "success")
+            else:
+                flash("Lütfen içerik alanını doldurun.", "warning")
+
+        return render_template(
+            "bestsoft/corporate_page.html",
+            corporate_content_value=content_value,
+        )
 
     @app.route("/bestwork/<path:filename>")
     def bestsoft_dist(filename: str):

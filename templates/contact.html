@@ -1,0 +1,129 @@
+{% extends "inc/base.html" %}
+{% block title %}İletişim{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style>
+        .contact-hero {
+            background: radial-gradient(circle at top, rgba(124, 58, 237, 0.15), transparent 55%),
+                        linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(245, 158, 11, 0.08));
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<section class="py-12 sm:py-16 lg:py-20 contact-hero">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+            <div class="bg-white rounded-3xl shadow-xl shadow-primary/5 border border-slate-100 p-6 sm:p-8 space-y-6">
+                <div>
+                    <p class="text-sm uppercase tracking-[0.5em] text-primary font-semibold mb-2">Bize Ulaşın</p>
+                    <h1 class="text-3xl sm:text-4xl font-semibold text-slate-900 mb-3">Sorularınız için buradayız.</h1>
+                    <p class="text-on-surface-variant">Formu doldurun, uzman ekibimiz en kısa sürede size dönüş yapsın.</p>
+                </div>
+                <form method="post" class="space-y-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-slate-600 mb-1">Ad Soyad</label>
+                            <input
+                                type="text"
+                                id="full_name"
+                                name="full_name"
+                                value="{{ form_state.full_name|default('')|e }}"
+                                required
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="Adınız ve soyadınız"
+                            >
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-slate-600 mb-1">Telefon</label>
+                            <input
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                value="{{ form_state.phone|default('')|e }}"
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="+90 5XX XXX XX XX"
+                            >
+                        </div>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-600 mb-1">E-posta</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value="{{ form_state.email|default('')|e }}"
+                            required
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="ornek@bestwork.com"
+                        >
+                    </div>
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-slate-600 mb-1">Şehir</label>
+                        <input
+                            type="text"
+                            id="city"
+                            name="city"
+                            value="{{ form_state.city|default('')|e }}"
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="İstanbul"
+                        >
+                    </div>
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-slate-600 mb-1">Açıklama</label>
+                        <textarea
+                            id="message"
+                            name="message"
+                            rows="5"
+                            required
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                            placeholder="Mesajınızı buraya yazın..."
+                        >{{ form_state.message|default('')|e }}</textarea>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                        <p class="text-xs text-slate-500">Gönder tuşuna basarak KVKK kapsamında iletişim izni verdiğinizi onaylamış olursunuz.</p>
+                        <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-violet-500 transition">
+                            <span class="material-symbols-outlined text-base">send</span>
+                            Gönder
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="space-y-5">
+                <div class="bg-white/80 backdrop-blur rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/50 p-6 sm:p-8 space-y-4">
+                    <p class="text-sm uppercase tracking-[0.5em] text-primary font-semibold">İletişim Bilgileri</p>
+                    <div class="space-y-3 text-slate-700">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.4em] text-slate-400">Şirket</p>
+                            <p class="text-lg font-semibold text-slate-900">{{ contact_info.company_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.4em] text-slate-400">Adres</p>
+                            <p class="text-sm text-slate-600 whitespace-pre-line">{{ contact_info.address }}</p>
+                        </div>
+                        <div class="flex items-center gap-3 pt-2">
+                            <span class="material-symbols-outlined text-primary">call</span>
+                            <a href="tel:{{ contact_info.phone_href }}" class="text-sm font-medium text-slate-700 hover:text-primary transition">{{ contact_info.phone }}</a>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">mail</span>
+                            <a href="mailto:{{ contact_info.email }}" class="text-sm font-medium text-slate-700 hover:text-primary transition">{{ contact_info.email }}</a>
+                        </div>
+                    </div>
+                </div>
+                {% if contact_info.address %}
+                <div class="rounded-3xl overflow-hidden border border-slate-100 shadow-lg shadow-slate-200/60">
+                    <iframe
+                        title="Konum"
+                        src="https://maps.google.com/maps?q={{ contact_info.map_query }}&output=embed"
+                        class="w-full h-72"
+                        style="border:0;"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

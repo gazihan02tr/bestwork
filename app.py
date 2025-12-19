@@ -165,6 +165,16 @@ DEFAULT_SITE_DESCRIPTION = "60 yılı aşkın deneyimle premium yaşam ürünler
 DEFAULT_CONTACT_EMAIL = "info@amway.com.tr"
 DEFAULT_CONTACT_ADDRESS = "İstanbul, Türkiye"
 DEFAULT_CONTACT_PHONE = "0850 222 00 00"
+DEFAULT_CONTACT_COMPANY = f"{_TRANSLATIONS.get(DEFAULT_LOCALE, {}).get('site_name', 'BestWork')} Genel Merkezi"
+DEFAULT_CORPORATE_CONTENT = """
+<h2>Kurumsal Yaklaşımımız</h2>
+<p>1950’lerden bu yana dünya genelinde milyonlarca haneye kaliteli yaşam ürünleri sunuyor, sürdürülebilirlik ve toplumsal fayda odağında büyüyoruz.</p>
+<ul>
+    <li>Güvenilir tedarik zinciri ve etik üretim.</li>
+    <li>Ar-Ge yatırımlarıyla yenilikçi çözümler.</li>
+    <li>İş ortaklarımız için kapsayıcı büyüme modeli.</li>
+</ul>
+"""
 DEFAULT_SOCIAL_LINKS = {
     "facebook": "#",
     "instagram": "#",
@@ -770,6 +780,12 @@ def register_routes(app: Flask) -> None:
         get_identity_cipher=get_identity_cipher,
     )
 
+    @app.route("/bestsoft/panel")
+    @app.route("/bestsoft/panel/")
+    def bestsoft_panel():
+        """Yönetim paneli ana sayfasına hızlı yönlendirme."""
+        return redirect(url_for("bestsoft_landing"))
+
     def parse_datetime(value):
         if isinstance(value, datetime):
             return value
@@ -910,12 +926,132 @@ def register_routes(app: Flask) -> None:
         except (TypeError, ValueError):
             slider_transition_seconds = 6.5
 
+        certificate_images: List[Dict[str, str]] = []
+        certificate_cursor = app.db.bestsoft_certificates.find().sort([("created_at", -1)])
+        for doc in certificate_cursor:
+            filename = doc.get("filename")
+            if not filename:
+                continue
+            certificate_images.append(
+                {
+                    "id": str(doc["_id"]),
+                    "title": doc.get("title") or "Sertifika",
+                    "alt_text": doc.get("alt_text") or doc.get("title") or "Sertifika",
+                    "url": url_for("static", filename=f"uploads/certificates/{filename}"),
+                }
+            )
+
         return render_template(
             "index.html",
             products=products,
             slider_images=slider_images,
             slider_transition_seconds=slider_transition_seconds,
+            certificate_images=certificate_images,
         )
+
+    @app.route("/iletisim", methods=["GET", "POST"])
+    def contact_page():
+        contact_company_name = (
+            get_site_text_value(app, "contact_page_company_name", "default")
+            or get_site_text_value(app, "site_name", "default")
+            or DEFAULT_CONTACT_COMPANY
+        )
+        contact_email = (
+            get_site_text_value(app, "contact_page_email", "default")
+            or get_site_text_value(app, "site_contact_email", "default")
+            or DEFAULT_CONTACT_EMAIL
+        )
+        contact_phone = (
+            get_site_text_value(app, "contact_page_phone", "default")
+            or get_site_text_value(app, "site_contact_phone", "default")
+            or DEFAULT_CONTACT_PHONE
+        )
+        contact_address = (
+            get_site_text_value(app, "contact_page_address", "default")
+            or get_site_text_value(app, "site_contact_address", "default")
+            or DEFAULT_CONTACT_ADDRESS
+        )
+        map_query_target = contact_address or contact_company_name or DEFAULT_CONTACT_COMPANY
+        normalized_phone_href = "".join(ch for ch in contact_phone if ch.isdigit() or ch == "+")
+        contact_info = {
+            "company_name": contact_company_name,
+            "email": contact_email,
+            "phone": contact_phone,
+            "phone_href": normalized_phone_href or contact_phone,
+            "address": contact_address,
+            "map_query": quote(map_query_target),
+        }
+
+        form_state = {"full_name": "", "phone": "", "email": "", "city": "", "message": ""}
+
+        if request.method == "POST":
+            full_name = (request.form.get("full_name") or "").strip()
+            phone = (request.form.get("phone") or "").strip()
+            email = (request.form.get("email") or "").strip()
+            city = (request.form.get("city") or "").strip()
+            message = (request.form.get("message") or "").strip()
+
+            form_state.update(
+                {
+                    "full_name": full_name,
+                    "phone": phone,
+                    "email": email,
+                    "city": city,
+                    "message": message,
+                }
+            )
+
+            if not full_name or not email or not message:
+                flash("Lütfen Ad Soyad, E-posta ve Açıklama alanlarını doldurun.", "warning")
+            else:
+                app.db.contact_messages.insert_one(
+                    {
+                        "full_name": full_name,
+                        "phone": phone,
+                        "email": email,
+                        "city": city,
+                        "message": message,
+                        "created_at": datetime.utcnow(),
+                        "source": "contact_page",
+                    }
+                )
+                flash("Mesajınızı aldık. En kısa sürede size dönüş yapacağız.", "success")
+                return redirect(url_for("contact_page"))
+
+        return render_template("contact.html", contact_info=contact_info, form_state=form_state)
+
+    @app.route("/eshop")
+    def eshop():
+        ensure_sample_products()
+        product_cursor = app.db.products.find()
+        products = []
+        category_counts: Dict[str, int] = {}
+        for doc in product_cursor:
+            item = dict(doc)
+            item["id"] = str(doc["_id"])
+            category = item.get("category") or "Diğer"
+            category_counts[category] = category_counts.get(category, 0) + 1
+            products.append(item)
+
+        sorted_categories = sorted(category_counts.items(), key=lambda kv: kv[0])
+        featured_products = products[:3]
+        trending_products = products[:6]
+
+        return render_template(
+            "eshop.html",
+            products=products,
+            categories=sorted_categories,
+            featured_products=featured_products,
+            trending_products=trending_products,
+        )
+
+    @app.route("/kurumsal")
+    def corporate_page():
+        content = (
+            get_site_text_value(app, "corporate_page_content", "default")
+            or DEFAULT_CORPORATE_CONTENT
+        )
+        return render_template("corporate.html", corporate_content=content)
 
     @app.route("/register", methods=["GET", "POST"])
     def register():

@@ -192,15 +192,67 @@
             scroll-behavior: smooth;
         }
 
-        .swal2-purple-popup {
-            border: 1px solid #d8c8ff;
-            border-radius: 28px;
-            background: #fbf6ff;
-            color: #2b0c66;
+        .swal2-minimal-toast {
+            padding: 0.75rem 1rem !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(15, 23, 42, 0.12) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
+            color: #0f172a !important;
+            min-width: 240px;
+            backdrop-filter: blur(12px);
         }
 
-        .swal2-purple-title {
-            color: #2b0c66 !important;
+        .swal2-minimal-toast .swal2-icon {
+            margin: 0 0.65rem 0 0 !important;
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px !important;
+            border-width: 2px !important;
+        }
+
+        .swal2-minimal-title {
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            margin: 0 0 0.15rem !important;
+            color: inherit !important;
+        }
+
+        .swal2-minimal-text,
+        .swal2-minimal-toast .swal2-html-container {
+            margin: 0 !important;
+            font-size: 0.85rem !important;
+            color: rgba(15, 23, 42, 0.75) !important;
+        }
+
+        .swal2-minimal-slide-in {
+            animation: minimalToastIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .swal2-minimal-slide-out {
+            animation: minimalToastOut 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes minimalToastIn {
+            from {
+                transform: translateX(30px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes minimalToastOut {
+            from {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(20px) scale(0.98);
+                opacity: 0;
+            }
         }
         :root {
             --uppercase-spacing: 0.06em;
@@ -351,11 +403,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const categoryConfig = {
-                success: { icon: 'success', title: '{{ t("alert_success") }}' },
-                error: { icon: 'error', title: '{{ t("alert_error") }}' },
-                warning: { icon: 'warning', title: '{{ t("alert_warning") }}' },
-                info: { icon: 'info', title: '{{ t("alert_info") }}' },
-                default: { icon: 'question', title: '{{ t("alert_default") }}' },
+                success: { icon: 'success', title: '{{ t("alert_success") }}', color: '#22c55e' },
+                error: { icon: 'error', title: '{{ t("alert_error") }}', color: '#ef4444' },
+                warning: { icon: 'warning', title: '{{ t("alert_warning") }}', color: '#f59e0b' },
+                info: { icon: 'info', title: '{{ t("alert_info") }}', color: '#3b82f6' },
+                default: { icon: 'question', title: '{{ t("alert_default") }}', color: '#94a3b8' },
             };
 
             const flashMessages = {{ flash_messages|tojson|safe }};
@@ -364,20 +416,30 @@
             const showFlash = ([category, message]) => {
                 const config = categoryConfig[category] || categoryConfig.default;
                 return Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: config.icon,
+                    iconColor: config.color,
                     title: config.title,
                     text: message,
-                    background: '#fbf6ff',
-                    color: '#2b0c66',
+                    color: '#0f172a',
                     customClass: {
-                        popup: 'swal2-purple-popup',
-                        title: 'swal2-purple-title',
+                        popup: 'swal2-minimal-toast',
+                        title: 'swal2-minimal-title',
+                        htmlContainer: 'swal2-minimal-text',
                     },
                     showConfirmButton: false,
-                    showCloseButton: true,
-                    timer: 2500,
-                    timerProgressBar: true,
-                    allowOutsideClick: true,
+                    showCloseButton: false,
+                    timer: 3200,
+                    timerProgressBar: false,
+                    width: 320,
+                    showClass: { popup: 'swal2-minimal-slide-in' },
+                    hideClass: { popup: 'swal2-minimal-slide-out' },
+                    allowOutsideClick: false,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    },
                 });
             };
 
