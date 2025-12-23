@@ -1,114 +1,232 @@
-{% extends "bestsoft/inc/base.html" %}
-{% block title %}İletişim Sayfası Ayarları{% endblock %}
+{% extends 'bestsoft/inc/base.html' %}
+
+{% block title %}Mesajlar - BestSoft Admin{% endblock %}
+
+{% block page_title %}Mesajlar{% endblock %}
+{% block page_subtitle %}İletişim formundan gelen mesajları yönetin{% endblock %}
+
 {% block content %}
-<div class="space-y-6">
-    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm p-6 sm:p-8 transition space-y-8">
-        <div class="flex flex-col gap-2 border-b border-slate-200 dark:border-slate-700 pb-4">
+<div x-data="{ showModal: false, selectedMessage: null, filter: 'all' }" class="space-y-6">
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="m3-card p-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-2xl">support_agent</span>
+                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-blue-600">mail</span>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">İletişim Sayfası Ayarları</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Müşteri tarafındaki iletişim sayfasında görünecek şirket ve erişim bilgilerini düzenleyin.</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ messages|length if messages else 0 }}</p>
+                    <p class="text-xs text-gray-500">Toplam</p>
                 </div>
             </div>
         </div>
-
-        <form method="post" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div class="space-y-6">
-                <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-5 space-y-5 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-200 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-xl">apartment</span>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Şirket Bilgileri</h2>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">İletişim sayfasının sağ tarafında listelenecek temel bilgiler.</p>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="contact_company_name" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Şirket Adı</label>
-                            <input
-                                type="text"
-                                id="contact_company_name"
-                                name="contact_company_name"
-                                value="{{ contact_company_name_value|e }}"
-                                class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                                placeholder="Örn. BestWork Genel Merkezi"
-                            >
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label for="contact_page_email" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">E-Posta Adresi</label>
-                                <input
-                                    type="email"
-                                    id="contact_page_email"
-                                    name="contact_page_email"
-                                    value="{{ contact_email_value|e }}"
-                                    class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                                    placeholder="info@bestwork.com"
-                                >
-                            </div>
-                            <div>
-                                <label for="contact_page_phone" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Telefon</label>
-                                <input
-                                    type="text"
-                                    id="contact_page_phone"
-                                    name="contact_page_phone"
-                                    value="{{ contact_phone_value|e }}"
-                                    class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                                    placeholder="+90 850 222 00 00"
-                                >
-                            </div>
-                        </div>
-                        <div>
-                            <label for="contact_page_address" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Adres</label>
-                            <textarea
-                                id="contact_page_address"
-                                name="contact_page_address"
-                                rows="4"
-                                class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition resize-none"
-                                placeholder="Cadde, Mahalle, Şehir"
-                            >{{ contact_address_value|e }}</textarea>
-                        </div>
-                    </div>
+        <div class="m3-card p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-amber-600">mark_email_unread</span>
                 </div>
-
-                <div class="flex justify-end">
-                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-violet-600 text-white font-semibold shadow hover:bg-violet-500 transition">
-                        <span class="material-symbols-outlined text-base">save</span>
-                        Kaydet
-                    </button>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ messages|selectattr('status', 'equalto', 'unread')|list|length if messages else 0 }}</p>
+                    <p class="text-xs text-gray-500">Okunmamış</p>
                 </div>
             </div>
-
-            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/60 dark:to-slate-900/30 shadow-sm p-5 space-y-4">
-                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                    <span class="material-symbols-outlined text-base text-violet-500">visibility</span>
-                    Gerçek zamanlı önizleme
+        </div>
+        <div class="m3-card p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-green-600">check_circle</span>
                 </div>
-                <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 space-y-3">
-                    <p class="text-xs uppercase tracking-[0.4em] text-primary font-semibold">İLETİŞİM BİLGİLERİ</p>
-                    <div class="space-y-2 text-slate-700 dark:text-slate-100">
-                        <p class="font-semibold text-lg">{{ contact_company_name_value or "Şirket Adı" }}</p>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ contact_address_value or "Adres bilgisi henüz eklenmedi." }}</p>
-                        <div class="pt-3 space-y-1 text-sm">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-base text-primary">call</span>
-                                <span>{{ contact_phone_value or "Telefon tanımlı değil" }}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-base text-primary">mail</span>
-                                <span>{{ contact_email_value or "E-posta tanımlı değil" }}</span>
-                            </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ messages|selectattr('status', 'equalto', 'read')|list|length if messages else 0 }}</p>
+                    <p class="text-xs text-gray-500">Okunmuş</p>
+                </div>
+            </div>
+        </div>
+        <div class="m3-card p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-purple-600">reply</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ messages|selectattr('replied')|list|length if messages else 0 }}</p>
+                    <p class="text-xs text-gray-500">Yanıtlanmış</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <div class="flex gap-2 overflow-x-auto pb-2">
+        <button 
+            @click="filter = 'all'"
+            :class="filter === 'all' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            class="px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+        >
+            Tümü
+        </button>
+        <button 
+            @click="filter = 'unread'"
+            :class="filter === 'unread' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            class="px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+        >
+            Okunmamış
+        </button>
+        <button 
+            @click="filter = 'read'"
+            :class="filter === 'read' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            class="px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+        >
+            Okunmuş
+        </button>
+        <button 
+            @click="filter = 'replied'"
+            :class="filter === 'replied' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            class="px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+        >
+            Yanıtlanmış
+        </button>
+    </div>
+    
+    <!-- Messages List -->
+    <div class="m3-card divide-y divide-gray-100">
+        {% if messages %}
+            {% for msg in messages %}
+            <div 
+                class="p-5 hover:bg-gray-50 transition-colors cursor-pointer"
+                @click="selectedMessage = {{ msg|tojson }}; showModal = true"
+                x-show="filter === 'all' || filter === '{{ msg.status }}' || (filter === 'replied' && {{ 'true' if msg.replied else 'false' }})"
+            >
+                <div class="flex items-start gap-4">
+                    <!-- Avatar -->
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+                        <span class="text-white font-bold text-lg">{{ msg.name[0]|upper if msg.name else 'M' }}</span>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="font-semibold text-gray-900">{{ msg.name }}</h3>
+                            {% if msg.status == 'unread' %}
+                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            {% endif %}
+                            {% if msg.replied %}
+                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">Yanıtlandı</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-600 mb-1">{{ msg.subject or 'Konu belirtilmedi' }}</p>
+                        <p class="text-sm text-gray-500 truncate">{{ msg.message[:100] }}...</p>
+                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm">mail</span>
+                                {{ msg.email }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm">schedule</span>
+                                {{ msg.created_at.strftime('%d.%m.%Y %H:%M') if msg.created_at else '' }}
+                            </span>
                         </div>
                     </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center gap-1">
+                        <form action="{{ url_for('bestsoft_bp.message_delete', msg_id=msg._id) }}" method="POST" @click.stop onsubmit="return confirm('Bu mesajı silmek istediğinize emin misiniz?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Bu bilgiler müşteri tarafındaki iletişim sayfasının sağ sütununda yayınlanır. Boş bırakılan alanlar ziyaretçilere gösterilmez.</p>
             </div>
-        </form>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="p-12 text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-4xl text-gray-400">inbox</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Mesaj yok</h3>
+                <p class="text-gray-500">Henüz iletişim formu üzerinden mesaj gelmemiş.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Message Detail Modal -->
+    <div 
+        x-show="showModal && selectedMessage"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        @click.self="showModal = false"
+    >
+        <div 
+            x-show="showModal"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        >
+            <template x-if="selectedMessage">
+                <div>
+                    <!-- Modal Header -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                                    <span class="text-white font-bold text-xl" x-text="selectedMessage.name ? selectedMessage.name[0].toUpperCase() : 'M'"></span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900" x-text="selectedMessage.name"></h2>
+                                    <p class="text-sm text-gray-500" x-text="selectedMessage.email"></p>
+                                </div>
+                            </div>
+                            <button @click="showModal = false" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                                <span class="material-symbols-rounded text-gray-500">close</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Body -->
+                    <div class="p-6">
+                        <div class="mb-4">
+                            <span class="text-sm text-gray-500">Konu:</span>
+                            <h3 class="text-lg font-semibold text-gray-900" x-text="selectedMessage.subject || 'Konu belirtilmedi'"></h3>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-2xl p-4 mb-6">
+                            <p class="text-gray-700 whitespace-pre-wrap" x-text="selectedMessage.message"></p>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 text-sm text-gray-500">
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-lg">schedule</span>
+                                <span x-text="selectedMessage.created_at ? new Date(selectedMessage.created_at).toLocaleString('tr-TR') : ''"></span>
+                            </span>
+                            <template x-if="selectedMessage.phone">
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-rounded text-lg">phone</span>
+                                    <span x-text="selectedMessage.phone"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                        <a :href="'mailto:' + selectedMessage.email" class="flex-1 m3-btn m3-btn-outlined">
+                            <span class="material-symbols-rounded">mail</span>
+                            E-posta Gönder
+                        </a>
+                        <button @click="showModal = false" class="flex-1 m3-btn m3-btn-filled">
+                            Kapat
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
     </div>
 </div>
 {% endblock %}

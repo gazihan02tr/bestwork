@@ -1,6 +1,15 @@
-Flask
-pymongo
-Werkzeug
-cryptography
-python-dotenv
-Pillow
+Flask==3.0.0
+pymongo==4.6.1
+Werkzeug==3.0.1
+cryptography==41.0.7
+python-dotenv==1.0.0
+Pillow==10.4.0
+
+# Security & Performance
+Flask-WTF==1.2.1
+Flask-Limiter==3.5.0
+Flask-Caching==2.1.0
+marshmallow==3.20.1
+
+# Optional but recommended
+redis==5.0.1

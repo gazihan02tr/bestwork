@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import wraps
 import hashlib
 import hmac
+import logging
 import os
 import random
 import string
@@ -15,19 +16,42 @@ from werkzeug.utils import secure_filename
 from bson import ObjectId
 from flask import (
     Flask,
+    abort,
     current_app,
     flash,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
     session,
     url_for,
 )
-from pymongo import MongoClient
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_caching import Cache
+from marshmallow import ValidationError as MarshmallowValidationError
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from pymongo.errors import DuplicateKeyError, PyMongoError
 from cryptography.fernet import Fernet, InvalidToken
 
-from bestsoft import register_bestsoft_routes
+from bestsoft import init_bestsoft, create_default_admin
+from config import get_config
+from validators import (
+    RegisterSchema,
+    LoginSchema,
+    ContactSchema,
+    BankInfoSchema,
+    PasswordChangeSchema,
+)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 _identity_cipher: Optional[Fernet] = None
 _SYS_RANDOM = random.SystemRandom()
@@ -251,28 +275,53 @@ def _brand_color_rgb(value: str) -> str:
 def get_site_text_value(app: Flask, key: str, locale: str) -> Optional[str]:
     """
     Site metinleri koleksiyonundan dinamik içerik getir.
-    Önce istenen dili, ardından 'default' kaydını dener.
+    Cache ile optimize edilmiş. Önce istenen dili, ardından 'default' kaydını dener.
     """
+    cache_key = f"site_text:{key}:{locale}"
+    
+    # Try to get from cache if available
+    if hasattr(app, 'cache'):
+        cached_value = app.cache.get(cache_key)
+        if cached_value is not None:
+            return cached_value
+    
     try:
         doc = _fetch_site_setting(app, key, locale)
-        if doc and doc.get("value"):
-            return doc["value"]
-    except Exception:
+        value = doc.get("value") if doc else None
+        
+        # Store in cache
+        if hasattr(app, 'cache') and value:
+            app.cache.set(cache_key, value, timeout=300)  # 5 minutes
+        
+        return value
+    except Exception as e:
+        logger.error(f"Error fetching site text {key}: {str(e)}")
         return None
-    return None
 
 
 def set_site_text_value(app: Flask, key: str, locale: str, value: str, metadata: Optional[Dict[str, Any]] = None) -> None:
-    """Dinamik site metnini kaydet veya güncelle."""
+    """Dinamik site metnini kaydet veya güncelle. Cache'i temizle."""
     normalized_locale = locale or "default"
     update_data: Dict[str, Any] = {"value": value, "locale": normalized_locale, "updated_at": datetime.utcnow()}
     if metadata:
         update_data.update(metadata)
-    app.db.site_settings.update_one(
-        {"key": key, "locale": normalized_locale},
-        {"$set": update_data, "$setOnInsert": {"created_at": datetime.utcnow()}},
-        upsert=True,
-    )
+    
+    try:
+        app.db.site_settings.update_one(
+            {"key": key, "locale": normalized_locale},
+            {"$set": update_data, "$setOnInsert": {"created_at": datetime.utcnow()}},
+            upsert=True,
+        )
+        
+        # Clear cache
+        if hasattr(app, 'cache'):
+            cache_key = f"site_text:{key}:{normalized_locale}"
+            app.cache.delete(cache_key)
+            
+        logger.info(f"Site text updated: {key} ({normalized_locale})")
+    except Exception as e:
+        logger.error(f"Error setting site text {key}: {str(e)}")
+        raise
 
 
 def build_initials_avatar(initials: str, size: int = 256) -> str:
@@ -451,16 +500,85 @@ def check_password_hash(pwhash: str, password: str) -> bool:
 def create_app() -> Flask:
     """Flask uygulamasını oluştur ve yapılandır."""
     app = Flask(__name__)
-    app.secret_key = (
-        app_config("SECRET_KEY") or "local-dev-secret-change-me"
-    )  # Production'da ortam değişkeni kullanılmalı
-
+    
+    # Load configuration
+    config = get_config()
+    app.config.from_object(config)
+    
+    # Initialize extensions
+    csrf = CSRFProtect(app)
+    
+    # Exempt bestsoft login from CSRF for first load
+    csrf.exempt('bestsoft_bp.login')
+    
+    # Initialize rate limiter
+    limiter = Limiter(
+        key_func=get_remote_address,
+        app=app,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri=app.config.get('RATELIMIT_STORAGE_URL'),
+        strategy=app.config.get('RATELIMIT_STRATEGY')
+    )
+    
+    # Initialize cache
+    cache = Cache(app, config={
+        'CACHE_TYPE': app.config.get('CACHE_TYPE'),
+        'CACHE_DEFAULT_TIMEOUT': app.config.get('CACHE_DEFAULT_TIMEOUT'),
+        'CACHE_REDIS_URL': app.config.get('CACHE_REDIS_URL')
+    })
+    
+    # Store in app for access in routes
+    app.limiter = limiter
+    app.cache = cache
+    
+    # MongoDB with connection pooling
     app.mongo_client = create_mongo_client()
     app.db = resolve_database(app.mongo_client)
-
+    
+    # Create database indexes for performance
+    create_database_indexes(app.db)
+    
     register_db_helpers(app)
     register_routes(app)
-
+    
+    # Security headers
+    @app.after_request
+    def set_security_headers(response):
+        """Add security headers to all responses"""
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        
+        # Only add HSTS in production with HTTPS
+        if not app.debug and request.is_secure:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+        return response
+    
+    # Global error handlers
+    @app.errorhandler(404)
+    def not_found_error(error):
+        logger.warning(f"404 error: {request.url}")
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Resource not found'}), 404
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        logger.error(f"500 error: {str(error)}", exc_info=True)
+        app.db = resolve_database(app.mongo_client)  # Reset DB connection
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Internal server error'}), 500
+        return render_template('errors/500.html'), 500
+    
+    @app.errorhandler(429)
+    def ratelimit_handler(error):
+        logger.warning(f"Rate limit exceeded: {request.remote_addr}")
+        return jsonify({
+            'error': 'Rate limit exceeded',
+            'message': 'Çok fazla istek gönderdiniz. Lütfen biraz bekleyin.'
+        }), 429
+    
     @app.before_request
     def _load_locale():
         locale = session.get("lang") or request.accept_languages.best_match(SUPPORTED_LOCALES)
@@ -486,7 +604,8 @@ def create_app() -> Flask:
         session["lang"] = lang
         next_url = request.headers.get("Referer") or url_for("index")
         return redirect(next_url)
-
+    
+    logger.info(f"Application started in {app.config.get('ENV', 'unknown')} mode")
     return app
 
 
@@ -496,8 +615,26 @@ def app_config(name: str) -> Optional[str]:
 
 
 def create_mongo_client() -> MongoClient:
-    """MongoDB istemcisini hazırla."""
-    uri = app_config("MONGO_URI") or "mongodb://localhost:27017/bestwork"
+    """MongoDB istemcisini connection pooling ile hazırla."""
+    config = get_config()
+    uri = config.MONGO_URI
+    
+    try:
+        client = MongoClient(
+            uri,
+            maxPoolSize=config.MONGO_MAX_POOL_SIZE,
+            minPoolSize=config.MONGO_MIN_POOL_SIZE,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=10000,
+            socketTimeoutMS=20000,
+        )
+        # Test connection
+        client.admin.command('ping')
+        logger.info(f"MongoDB connected successfully with pool size: {config.MONGO_MAX_POOL_SIZE}")
+        return client
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {str(e)}")
+        raise RuntimeError(f"MongoDB bağlantısı kurulamadı: {str(e)}")
     return MongoClient(uri)
 
 
@@ -516,6 +653,39 @@ def resolve_database(client: MongoClient):
     if database is not None:
         return database
     return client[default_db_name]
+
+
+def create_database_indexes(db):
+    """Create database indexes for optimal query performance."""
+    try:
+        # Users collection indexes
+        db.users.create_index([("email", ASCENDING)], unique=True)
+        db.users.create_index([("phone", ASCENDING)], unique=True)
+        db.users.create_index([("identity_number_hash", ASCENDING)], unique=True)
+        db.users.create_index([("referral_code", ASCENDING)], unique=True)
+        db.users.create_index([("sponsor_id", ASCENDING)])
+        db.users.create_index([("created_at", DESCENDING)])
+        
+        # Products collection indexes
+        db.products.create_index([("category", ASCENDING)])
+        db.products.create_index([("name", "text")])  # Text search
+        db.products.create_index([("created_at", DESCENDING)])
+        
+        # Orders collection indexes
+        db.orders.create_index([("user_id", ASCENDING)])
+        db.orders.create_index([("created_at", DESCENDING)])
+        db.orders.create_index([("status", ASCENDING)])
+        
+        # Site settings collection indexes
+        db.site_settings.create_index([("key", ASCENDING), ("locale", ASCENDING)], unique=True)
+        
+        # Announcements collection indexes
+        db.announcements.create_index([("created_at", DESCENDING)])
+        db.announcements.create_index([("is_active", ASCENDING)])
+        
+        logger.info("Database indexes created successfully")
+    except Exception as e:
+        logger.warning(f"Index creation warning (may already exist): {str(e)}")
 
 
 def register_db_helpers(app: Flask) -> None:
@@ -769,22 +939,17 @@ def register_routes(app: Flask) -> None:
         except (ValueError, TypeError):
             return str(value)
 
-    register_bestsoft_routes(
-        app,
-        dist_dir=BESTSOFT_DIST_DIR,
-        default_locale=DEFAULT_LOCALE,
-        translations=_TRANSLATIONS,
-        set_site_text_value=set_site_text_value,
-        get_site_text_value=get_site_text_value,
-        format_datetime_for_display=format_datetime_for_display,
-        get_identity_cipher=get_identity_cipher,
-    )
+    # Initialize BestSoft Admin Panel
+    init_bestsoft(app)
+    
+    # Create default admin if not exists
+    create_default_admin(app, username='admin', password='admin123')
 
     @app.route("/bestsoft/panel")
     @app.route("/bestsoft/panel/")
     def bestsoft_panel():
         """Yönetim paneli ana sayfasına hızlı yönlendirme."""
-        return redirect(url_for("bestsoft_landing"))
+        return redirect(url_for("bestsoft_bp.dashboard"))
 
     def parse_datetime(value):
         if isinstance(value, datetime):
@@ -2127,18 +2292,29 @@ def register_routes(app: Flask) -> None:
             password = request.form.get("password", "")
             next_url = request.args.get("next") or request.form.get("next") or url_for("index")
 
+            # Basic validation
+            if not identifier or not password:
+                flash("Lütfen tüm alanları doldurun.", "error")
+                return render_template(template_name, identifier=identifier, next=next_url)
+
+            # Check demo user first
             if identifier == DEMO_LOGIN_IDENTIFIER and password == DEMO_LOGIN_PASSWORD:
                 user = ensure_demo_user_exists(app)
             else:
+                # Resolve user
                 user = resolve_user_by_identifier(app, identifier)
                 if user and not check_password_hash(user["password_hash"], password):
                     user = None
 
             if not user:
+                logger.warning(f"Failed login attempt for identifier: {identifier} from IP: {request.remote_addr}")
                 flash("Kimlik bilgileri veya şifre hatalı.", "error")
                 return render_template(template_name, identifier=identifier, next=next_url)
 
+            # Successful login
             session["user_id"] = str(user["_id"])
+            session.permanent = True  # Use permanent session lifetime
+            logger.info(f"User logged in: {user.get('email', 'unknown')}")
             flash("Tekrar hoş geldiniz!", "success")
             return redirect(next_url)
 
@@ -2147,6 +2323,7 @@ def register_routes(app: Flask) -> None:
         return render_template(template_name, next=next_url, identifier=identifier)
 
     @app.route("/login", methods=["GET", "POST"])
+    @app.limiter.limit("10 per minute", methods=["POST"])
     def login():
         return _render_login_view("auth/login.html")
 
@@ -2607,33 +2784,28 @@ def decrypt_identity_number(token: str) -> Optional[str]:
 
 
 def get_identity_cipher() -> Fernet:
+    """TCKN şifreleme için Fernet cipher'ını oluştur."""
     global _identity_cipher
     if _identity_cipher is not None:
         return _identity_cipher
 
-    secret = app_config("TCKN_SECRET_KEY")
-    generated = False
-    if not secret:
-        generated_key = base64.urlsafe_b64encode(os.urandom(32)).decode("utf-8")
-        secret = generated_key
-        generated = True
-
-    digest = hashlib.sha256(secret.encode("utf-8")).digest()
-    key = base64.urlsafe_b64encode(digest)
-    _identity_cipher = Fernet(key)
-
-    if generated:
-        message = (
-            "TCKN_SECRET_KEY ortam değişkeni tanımlı değil. Geçici bir anahtar üretildi; "
-            "kayıtlı TCKN verileri uygulama yeniden başlatıldığında çözümlenemez. "
-            "Lütfen kalıcı bir TCKN_SECRET_KEY tanımlayın."
+    try:
+        config = get_config()
+        secret = config.TCKN_SECRET_KEY
+        
+        digest = hashlib.sha256(secret.encode("utf-8")).digest()
+        key = base64.urlsafe_b64encode(digest)
+        _identity_cipher = Fernet(key)
+        
+        logger.info("TCKN cipher initialized successfully")
+        return _identity_cipher
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize TCKN cipher: {str(e)}")
+        raise RuntimeError(
+            "TCKN_SECRET_KEY yapılandırması geçersiz. "
+            "Lütfen .env dosyasında geçerli bir TCKN_SECRET_KEY tanımlayın."
         )
-        try:
-            current_app.logger.warning(message)
-        except RuntimeError:
-            print(message)
-
-    return _identity_cipher
 
 
 def fetch_product(app: Flask, product_id: str):
@@ -2647,39 +2819,76 @@ def fetch_product(app: Flask, product_id: str):
 def load_cart_with_products(app: Flask):
     """
     Oturumdaki sepet öğelerini ürün detaylarıyla birleştir.
+    N+1 query sorununu çözülmüş optimized versiyon.
     cart_items çıktısı: [{"product": product_doc, "quantity": int, "line_total": float}, ...]
     """
     cart: List[Dict] = session.get("cart", [])
+    if not cart:
+        return [], 0.0
+    
     detailed_items = []
     cart_total = 0.0
 
-    for item in cart:
-        product = fetch_product(app, item["product_id"])
-        if not product:
-            continue
+    try:
+        # Collect all product IDs
+        product_ids = []
+        for item in cart:
+            try:
+                product_ids.append(ObjectId(item["product_id"]))
+            except Exception:
+                logger.warning(f"Invalid product_id in cart: {item.get('product_id')}")
+                continue
+        
+        if not product_ids:
+            return [], 0.0
+        
+        # Fetch all products in one query (solves N+1 problem)
+        products = list(app.db.products.find({"_id": {"$in": product_ids}}))
+        product_map = {str(p["_id"]): p for p in products}
+        
+        # Build cart items
+        for item in cart:
+            product_id = item["product_id"]
+            product = product_map.get(product_id)
+            
+            if not product:
+                logger.warning(f"Product not found: {product_id}")
+                continue
 
-        quantity = int(item.get("quantity", 1))
-        line_total = float(product["price"]) * quantity
-        cart_total += line_total
+            quantity = int(item.get("quantity", 1))
+            line_total = float(product.get("price", 0)) * quantity
+            cart_total += line_total
 
-        product_data = dict(product)
-        product_data["_id"] = str(product["_id"])
+            product_data = dict(product)
+            product_data["_id"] = str(product["_id"])
 
-        detailed_items.append(
-            {
+            detailed_items.append({
                 "product": product_data,
                 "product_id": product_data["_id"],
                 "quantity": quantity,
                 "line_total": line_total,
-            }
-        )
+            })
 
-    cart_total = round(cart_total, 2)
-    return detailed_items, cart_total
+        cart_total = round(cart_total, 2)
+        return detailed_items, cart_total
+        
+    except Exception as e:
+        logger.error(f"Error loading cart: {str(e)}")
+        return [], 0.0
 
 
 app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Only enable debug mode if explicitly set in environment
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() in ("true", "1", "yes")
+    host = os.environ.get("FLASK_HOST", "127.0.0.1")
+    port = int(os.environ.get("FLASK_PORT", 5000))
+    
+    if debug_mode:
+        logger.warning("⚠️  Running in DEBUG mode - NOT for production!")
+    else:
+        logger.info("✓ Running in production mode")
+    
+    app.run(debug=debug_mode, host=host, port=port)

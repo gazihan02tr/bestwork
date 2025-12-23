@@ -3,64 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BestSoft - Portal</title>
+    <title>Giriş Yap - BestSoft Admin</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .material-symbols-rounded {
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
 </head>
-<body class="font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] min-h-screen flex items-center justify-center overflow-hidden relative">
-    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ url_for('static', filename='bestsoft/img/bg_bestsoft.png') }}');"></div>
-    <div class="absolute inset-0 bg-slate-900/20 "></div>
-
-    <div class="relative z-10 w-full max-w-md px-6">
-        <div class="text-center">
-            <div class="relative bg-slate-700/60 border border-white/10 rounded-3xl shadow-2xl shadow-black/40 px-12 py-10 backdrop-blur-lg mt-[50%]">
-                <span class="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1 w-3/5 rounded-t-3xl bg-gradient-to-r from-transparent via-sky-300 to-transparent"></span>
-                <span class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-3/5 rounded-b-3xl bg-gradient-to-r from-transparent via-sky-300 to-transparent"></span>
-
-                {% with messages = get_flashed_messages(with_categories=True) %}
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 bg-gradient-to-br from-primary-50 via-white to-primary-100"></div>
+    <div class="fixed inset-0 opacity-30" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%237c3aed&quot; fill-opacity=&quot;0.05&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    
+    <!-- Login Card -->
+    <div class="relative w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-xl shadow-primary-500/30 mb-4">
+                <span class="text-white font-bold text-2xl">B</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">BestSoft Admin</h1>
+            <p class="text-gray-500 mt-1">Hesabınıza giriş yapın</p>
+        </div>
+        
+        <!-- Card -->
+        <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                <div class="flex flex-col gap-2 mb-6">
                     {% for category, message in messages %}
-                        <div class="px-4 py-3 text-left text-sm rounded-2xl border shadow {{ 'bg-emerald-600/20 border-emerald-300/50 text-emerald-50' if category == 'success' else '' }}{{ 'bg-rose-600/20 border-rose-300/50 text-rose-50' if category == 'error' else '' }}{{ 'bg-amber-500/25 border-amber-200/50 text-amber-50' if category == 'warning' else '' }}{{ 'bg-sky-600/20 border-sky-300/50 text-sky-50' if category not in ['success','error','warning'] else '' }}">
-                            {{ message }}
+                        <div class="mb-6 p-4 rounded-2xl flex items-center gap-3
+                            {% if category == 'success' %}bg-green-50 text-green-700{% endif %}
+                            {% if category == 'error' %}bg-red-50 text-red-700{% endif %}
+                            {% if category == 'warning' %}bg-amber-50 text-amber-700{% endif %}
+                            {% if category == 'info' %}bg-blue-50 text-blue-700{% endif %}">
+                            <span class="material-symbols-rounded">
+                                {% if category == 'success' %}check_circle{% endif %}
+                                {% if category == 'error' %}error{% endif %}
+                                {% if category == 'warning' %}warning{% endif %}
+                                {% if category == 'info' %}info{% endif %}
+                            </span>
+                            <span class="text-sm font-medium">{{ message }}</span>
                         </div>
                     {% endfor %}
-                </div>
                 {% endif %}
-                {% endwith %}
-
-                <form method="post" class="space-y-5">
-                    <input type="hidden" name="next" value="{{ next or '' }}">
-
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3 bg-slate-800/60 border border-white/10 rounded-full px-6 py-3 transition focus-within:border-sky-300/80">
-                            <span class="text-xl text-slate-200">👤</span>
-                            <input type="text"
-                                   name="identifier"
-                                   value="{{ identifier or '' }}"
-                                   placeholder="Üye ID"
-                                   required
-                                   autocomplete="off"
-                                   class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none">
-                        </div>
-
-                        <div class="flex items-center gap-3 bg-slate-800/60 border border-white/10 rounded-full px-6 py-3 transition focus-within:border-sky-300/80">
-                            <span class="text-xl text-slate-200">🔒</span>
-                            <input type="password"
-                                   name="password"
-                                   placeholder="Şifre"
-                                   required
-                                   autocomplete="off"
-                                   class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-400 focus:outline-none">
-                        </div>
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('bestsoft_bp.login') }}" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Username Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kullanıcı Adı</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-rounded text-gray-400">person</span>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            required
+                            class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                            placeholder="Kullanıcı adınızı girin"
+                        >
                     </div>
-
-                    <button type="submit"
-                            class="w-full py-3 rounded-full text-white text-sm font-semibold tracking-wide bg-gradient-to-r from-sky-500 via-sky-400 to-sky-300 shadow-lg shadow-sky-900/40 hover:-translate-y-1 hover:shadow-xl transition duration-300">
+                </div>
+                
+                <!-- Password Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Şifre</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-rounded text-gray-400">lock</span>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            required
+                            class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                            placeholder="Şifrenizi girin"
+                        >
+                    </div>
+                </div>
+                
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="remember" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="text-sm text-gray-600">Beni hatırla</span>
+                    </label>
+                    <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Şifremi unuttum</a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button 
+                    type="submit"
+                    class="w-full py-3.5 px-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-2xl hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
+                >
+                    <span class="flex items-center justify-center gap-2">
+                        <span class="material-symbols-rounded">login</span>
                         Giriş Yap
-                    </button>
-                </form>
-            </div>
+                    </span>
+                </button>
+            </form>
         </div>
+        
+        <!-- Footer -->
+        <p class="text-center text-sm text-gray-500 mt-6">
+            © 2025 BestSoft. Tüm hakları saklıdır.
+        </p>
     </div>
 </body>
 </html>

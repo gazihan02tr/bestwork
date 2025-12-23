@@ -1,0 +1,227 @@
+{% extends 'bestsoft/inc/base.html' %}
+
+{% block title %}Dashboard - BestSoft Admin{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Genel bakış ve istatistikler{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Welcome Card -->
+    <div class="m3-card p-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold mb-1">Hoş Geldiniz! 👋</h2>
+                <p class="text-primary-100">BestSoft Admin Panel'e hoş geldiniz. Bugün harika işler başaralım.</p>
+            </div>
+            <div class="hidden md:block">
+                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-5xl text-white/80">rocket_launch</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Stat Card 1 -->
+        <div class="m3-card p-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-2xl text-blue-600">group</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Toplam Kullanıcı</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.users if stats else 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center gap-1 text-sm">
+                <span class="material-symbols-rounded text-green-500 text-lg">trending_up</span>
+                <span class="text-green-600 font-medium">+12%</span>
+                <span class="text-gray-400">bu ay</span>
+            </div>
+        </div>
+        
+        <!-- Stat Card 2 -->
+        <div class="m3-card p-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-2xl text-green-600">shopping_bag</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Toplam Sipariş</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.orders if stats else 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center gap-1 text-sm">
+                <span class="material-symbols-rounded text-green-500 text-lg">trending_up</span>
+                <span class="text-green-600 font-medium">+8%</span>
+                <span class="text-gray-400">bu ay</span>
+            </div>
+        </div>
+        
+        <!-- Stat Card 3 -->
+        <div class="m3-card p-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-2xl text-amber-600">slideshow</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Aktif Slider</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.sliders if stats else 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center gap-1 text-sm">
+                <span class="material-symbols-rounded text-gray-400 text-lg">remove</span>
+                <span class="text-gray-500 font-medium">Değişim yok</span>
+            </div>
+        </div>
+        
+        <!-- Stat Card 4 -->
+        <div class="m3-card p-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-2xl text-red-600">mail</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Okunmamış Mesaj</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.messages if stats else 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center gap-1 text-sm">
+                <span class="material-symbols-rounded text-red-500 text-lg">priority_high</span>
+                <span class="text-red-600 font-medium">{{ stats.messages if stats else 0 }} bekliyor</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quick Actions -->
+        <div class="lg:col-span-2">
+            <div class="m3-card">
+                <div class="p-5 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-symbols-rounded text-primary-600">bolt</span>
+                        Hızlı İşlemler
+                    </h3>
+                </div>
+                <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <a href="{{ url_for('bestsoft_bp.slider') }}" class="group p-4 rounded-2xl bg-gray-50 hover:bg-primary-50 transition-all text-center">
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:shadow-md transition-shadow">
+                            <span class="material-symbols-rounded text-2xl text-primary-600">add_photo_alternate</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 group-hover:text-primary-700">Slider Ekle</p>
+                    </a>
+                    
+                    <a href="{{ url_for('bestsoft_bp.announcements') }}" class="group p-4 rounded-2xl bg-gray-50 hover:bg-primary-50 transition-all text-center">
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:shadow-md transition-shadow">
+                            <span class="material-symbols-rounded text-2xl text-primary-600">notifications_active</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 group-hover:text-primary-700">Duyuru Yayınla</p>
+                    </a>
+                    
+                    <a href="{{ url_for('bestsoft_bp.certificates') }}" class="group p-4 rounded-2xl bg-gray-50 hover:bg-primary-50 transition-all text-center">
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:shadow-md transition-shadow">
+                            <span class="material-symbols-rounded text-2xl text-primary-600">add_card</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 group-hover:text-primary-700">Sertifika Ekle</p>
+                    </a>
+                    
+                    <a href="{{ url_for('bestsoft_bp.site_info') }}" class="group p-4 rounded-2xl bg-gray-50 hover:bg-primary-50 transition-all text-center">
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:shadow-md transition-shadow">
+                            <span class="material-symbols-rounded text-2xl text-primary-600">settings</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 group-hover:text-primary-700">Ayarlar</p>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="m3-card mt-6">
+                <div class="p-5 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-symbols-rounded text-primary-600">history</span>
+                        Son Aktiviteler
+                    </h3>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="p-8 text-center">
+                        <span class="material-symbols-rounded text-4xl text-gray-300 mb-2">inbox</span>
+                        <p class="text-gray-500 text-sm">Henüz aktivite yok</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- System Info -->
+            <div class="m3-card">
+                <div class="p-5 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-symbols-rounded text-primary-600">info</span>
+                        Sistem Bilgisi
+                    </h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Versiyon</span>
+                        <span class="text-sm font-medium text-gray-900 px-2 py-1 bg-gray-100 rounded-lg">v2.0.0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Python</span>
+                        <span class="text-sm font-medium text-gray-900">3.13</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Flask</span>
+                        <span class="text-sm font-medium text-gray-900">3.0.0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Veritabanı</span>
+                        <span class="text-sm font-medium text-green-600 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            Bağlı
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Storage Info -->
+            <div class="m3-card">
+                <div class="p-5 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-symbols-rounded text-primary-600">cloud</span>
+                        Depolama
+                    </h3>
+                </div>
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-500">Kullanılan</span>
+                        <span class="text-sm font-medium text-gray-900">2.4 GB / 10 GB</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full w-1/4 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">%24 kullanılıyor</p>
+                </div>
+            </div>
+            
+            <!-- Help Card -->
+            <div class="m3-card p-5 bg-gradient-to-br from-primary-50 to-primary-100 border-none">
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white shadow-lg flex items-center justify-center">
+                        <span class="material-symbols-rounded text-3xl text-primary-600">support_agent</span>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-1">Yardıma mı ihtiyacınız var?</h4>
+                    <p class="text-sm text-gray-600 mb-4">Dokümantasyona göz atın veya destek ile iletişime geçin.</p>
+                    <button class="m3-btn m3-btn-filled w-full">
+                        <span class="material-symbols-rounded text-lg">menu_book</span>
+                        Dokümantasyon
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

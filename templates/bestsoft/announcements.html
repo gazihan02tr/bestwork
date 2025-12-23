@@ -1,62 +1,177 @@
-{% extends "bestsoft/inc/base.html" %}
-{% block title %}Duyuru Yönetimi{% endblock %}
-{% block head %}
-    {{ super() }}
-{% endblock %}
-{% block content %}
-<div class="space-y-6">
-   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition-colors duration-300">
-      <h1 class="text-2xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-         <span class="material-symbols-outlined text-blue-600 dark:text-indigo-300">campaign</span>
-         Duyuru Yönetimi
-      </h1>
-      <form method="post" action="{{ url_for('bestsoft_announcements') }}" class="space-y-4">
-         <input type="hidden" name="form_type" value="announcement">
-         <div>
-            <label for="announcement-content" class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Yeni duyuru</label>
-            <textarea id="announcement-content" name="content" rows="3" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900/40 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm p-3 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition" placeholder="Duyuru metnini yazın..." required></textarea>
-         </div>
-         <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-600 text-white hover:bg-violet-500 transition-colors shadow-sm">
-               <span class="material-symbols-outlined text-base">add_circle</span>
-               Kaydet
-            </button>
-         </div>
-      </form>
-   </div>
+{% extends 'bestsoft/inc/base.html' %}
 
-   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 transition-colors duration-300">
-      <div class="flex flex-col gap-2 mb-4">
-         <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Kayıtlı Duyurular</h2>
-         <p class="text-sm text-slate-500 dark:text-slate-400">Metni düzenleyebilir veya kaydı silebilirsiniz.</p>
-      </div>
-      {% if announcements %}
-      <div class="space-y-4">
-         {% for announcement in announcements %}
-         <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3 bg-white/80 dark:bg-slate-900/30">
-            <form method="post" action="{{ url_for('update_announcement', announcement_id=announcement.id) }}" class="flex flex-col gap-3 md:flex-row md:items-center">
-               <label class="sr-only" for="announcement-{{ announcement.id }}">Duyuru</label>
-               <input id="announcement-{{ announcement.id }}" name="content" type="text" value="{{ announcement.content }}" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900/40 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm p-2.5 text-slate-800 dark:text-slate-100" required>
-               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-amber-500/10 dark:bg-amber-400/20 text-amber-700 dark:text-amber-200 border border-amber-500/30 dark:border-amber-400/40 hover:bg-amber-500/20 dark:hover:bg-amber-400/30 transition-colors text-sm self-start">
-                  <span class="material-symbols-outlined text-base">edit</span>
-                  Güncelle
-               </button>
-            </form>
-            <form method="post" action="{{ url_for('delete_announcement', announcement_id=announcement.id) }}">
-               <button type="submit" class="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-200 border border-red-500/30 dark:border-red-500/40 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors text-sm">
-                  <span class="material-symbols-outlined text-base">delete</span>
-                  Sil
-               </button>
-            </form>
-            <div class="text-xs text-slate-500 dark:text-slate-400">
-               Güncellendi: {{ announcement.updated_at_display or announcement.created_at_display or "—" }}
+{% block title %}Duyurular - BestSoft Admin{% endblock %}
+
+{% block page_title %}Duyurular{% endblock %}
+{% block page_subtitle %}Site duyurularını yönetin{% endblock %}
+
+{% block content %}
+<div x-data="{ showModal: false }" class="space-y-6">
+    
+    <!-- Header Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <span class="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-full">
+                {{ announcements|selectattr('active')|list|length if announcements else 0 }} Aktif
+            </span>
+            <span class="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
+                {{ announcements|length if announcements else 0 }} Toplam
+            </span>
+        </div>
+        <button 
+            @click="showModal = true"
+            class="m3-btn m3-btn-filled"
+        >
+            <span class="material-symbols-rounded">add</span>
+            Yeni Duyuru
+        </button>
+    </div>
+    
+    <!-- Announcements List -->
+    <div class="space-y-4">
+        {% if announcements %}
+            {% for ann in announcements %}
+            <div class="m3-card p-5">
+                <div class="flex items-start gap-4">
+                    <!-- Icon -->
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0
+                        {% if ann.priority == 'high' %}bg-red-100{% elif ann.priority == 'medium' %}bg-amber-100{% else %}bg-blue-100{% endif %}">
+                        <span class="material-symbols-rounded text-2xl
+                            {% if ann.priority == 'high' %}text-red-600{% elif ann.priority == 'medium' %}text-amber-600{% else %}text-blue-600{% endif %}">
+                            {% if ann.priority == 'high' %}priority_high{% elif ann.priority == 'medium' %}notifications{% else %}info{% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="font-semibold text-gray-900">{{ ann.title }}</h3>
+                            {% if ann.active %}
+                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">Aktif</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">Pasif</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-gray-600 text-sm line-clamp-2">{{ ann.content }}</p>
+                        <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm">calendar_today</span>
+                                {{ ann.created_at.strftime('%d.%m.%Y') if ann.created_at else 'Tarih yok' }}
+                            </span>
+                            {% if ann.expires_at %}
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm">event_busy</span>
+                                Bitiş: {{ ann.expires_at.strftime('%d.%m.%Y') }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2">
+                        <form action="{{ url_for('bestsoft_bp.announcement_toggle', ann_id=ann._id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors" title="{% if ann.active %}Pasif Yap{% else %}Aktif Yap{% endif %}">
+                                <span class="material-symbols-rounded">{% if ann.active %}visibility_off{% else %}visibility{% endif %}</span>
+                            </button>
+                        </form>
+                        <form action="{{ url_for('bestsoft_bp.announcement_delete', ann_id=ann._id) }}" method="POST" onsubmit="return confirm('Bu duyuruyu silmek istediğinize emin misiniz?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="p-2 rounded-xl hover:bg-red-50 text-red-500 transition-colors" title="Sil">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-         </div>
-         {% endfor %}
-      </div>
-      {% else %}
-      <p class="text-sm text-slate-500 dark:text-slate-400">Henüz duyuru bulunmuyor.</p>
-      {% endif %}
-   </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="m3-card p-12 text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <span class="material-symbols-rounded text-4xl text-gray-400">campaign</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Henüz duyuru yok</h3>
+                <p class="text-gray-500 mb-6">İlk duyurunuzu oluşturarak başlayın.</p>
+                <button 
+                    @click="showModal = true"
+                    class="m3-btn m3-btn-filled"
+                >
+                    <span class="material-symbols-rounded">add</span>
+                    Duyuru Oluştur
+                </button>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Add Modal -->
+    <div 
+        x-show="showModal"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        @click.self="showModal = false"
+    >
+        <div 
+            x-show="showModal"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        >
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900">Yeni Duyuru</h2>
+                    <button @click="showModal = false" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <span class="material-symbols-rounded text-gray-500">close</span>
+                    </button>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('bestsoft_bp.announcements') }}" method="POST" class="p-6 space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Başlık</label>
+                    <input type="text" name="title" class="m3-input" placeholder="Duyuru başlığı" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">İçerik</label>
+                    <textarea name="content" rows="4" class="m3-input resize-none" placeholder="Duyuru içeriği..." required></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Öncelik</label>
+                        <select name="priority" class="m3-input">
+                            <option value="low">Düşük</option>
+                            <option value="medium" selected>Normal</option>
+                            <option value="high">Yüksek</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label>
+                        <input type="date" name="expires_at" class="m3-input">
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" name="active" id="active" checked class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <label for="active" class="text-sm font-medium text-gray-700">Hemen yayınla</label>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" @click="showModal = false" class="flex-1 m3-btn m3-btn-outlined">İptal</button>
+                    <button type="submit" class="flex-1 m3-btn m3-btn-filled">
+                        <span class="material-symbols-rounded">send</span>
+                        Yayınla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,36 @@
+{% extends "inc/base.html" %}
+
+{% block title %}Sayfa Bulunamadı{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full text-center">
+        <div class="mb-8">
+            <span class="material-symbols-outlined text-primary" style="font-size: 120px;">
+                search_off
+            </span>
+        </div>
+        
+        <h1 class="text-6xl font-bold text-on-surface mb-4">404</h1>
+        <h2 class="text-2xl font-semibold text-on-surface mb-4">Sayfa Bulunamadı</h2>
+        <p class="text-on-surface-variant mb-8">
+            Aradığınız sayfa mevcut değil veya taşınmış olabilir.
+        </p>
+        
+        <div class="space-y-4">
+            <a href="{{ url_for('index') }}" 
+               class="inline-flex items-center justify-center px-6 py-3 bg-primary text-on-primary rounded-full font-medium hover:opacity-90 transition-opacity">
+                <span class="material-symbols-outlined mr-2">home</span>
+                Ana Sayfaya Dön
+            </a>
+            
+            <div>
+                <a href="javascript:history.back()" 
+                   class="text-primary hover:underline">
+                    Geri Git
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

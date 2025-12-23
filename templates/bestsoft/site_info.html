@@ -1,258 +1,242 @@
-{% extends "bestsoft/inc/base.html" %}
-{% block title %}E-Ticaret Bilgileri{% endblock %}
-{% block head %}
-    {{ super() }}
-    <script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
-{% endblock %}
+{% extends 'bestsoft/inc/base.html' %}
+
+{% block title %}Site Ayarları - BestSoft Admin{% endblock %}
+
+{% block page_title %}Site Ayarları{% endblock %}
+{% block page_subtitle %}Genel site ayarlarını yapılandırın{% endblock %}
+
 {% block content %}
-<div class="space-y-6">
-    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm p-6 sm:p-8 transition space-y-8">
-        <div class="flex flex-col gap-2 border-b border-slate-200 dark:border-slate-700 pb-4">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-200 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-2xl">storefront</span>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">E-Ticaret Bilgileri</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Marka kimliği, iletişim ve medya içeriklerini tek ekrandan yönetin.</p>
-                </div>
-            </div>
+<div x-data="{ activeTab: 'general' }" class="space-y-6">
+    
+    <!-- Tabs -->
+    <div class="m3-card">
+        <div class="border-b border-gray-100">
+            <nav class="flex gap-1 p-2 overflow-x-auto">
+                <button 
+                    @click="activeTab = 'general'"
+                    :class="activeTab === 'general' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'"
+                    class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                    <span class="material-symbols-rounded text-lg">tune</span>
+                    Genel
+                </button>
+                <button 
+                    @click="activeTab = 'contact'"
+                    :class="activeTab === 'contact' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'"
+                    class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                    <span class="material-symbols-rounded text-lg">contact_mail</span>
+                    İletişim
+                </button>
+                <button 
+                    @click="activeTab = 'social'"
+                    :class="activeTab === 'social' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'"
+                    class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                    <span class="material-symbols-rounded text-lg">share</span>
+                    Sosyal Medya
+                </button>
+                <button 
+                    @click="activeTab = 'seo'"
+                    :class="activeTab === 'seo' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'"
+                    class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                    <span class="material-symbols-rounded text-lg">search</span>
+                    SEO
+                </button>
+                <button 
+                    @click="activeTab = 'appearance'"
+                    :class="activeTab === 'appearance' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'"
+                    class="px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                    <span class="material-symbols-rounded text-lg">palette</span>
+                    Görünüm
+                </button>
+            </nav>
         </div>
-
-        <form method="post" enctype="multipart/form-data" class="space-y-8">
-            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-200 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-xl">palette</span>
+        
+        <form action="{{ url_for('bestsoft_bp.site_info') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="tab" x-bind:value="activeTab">
+            
+            <!-- General Tab -->
+            <div x-show="activeTab === 'general'" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Site Adı</label>
+                        <input type="text" name="site_name" value="{{ settings.site_name if settings else '' }}" class="m3-input" placeholder="BestSoft">
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Marka Kimliği</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Site adı, marka rengi ve açıklama içeriğini düzenleyin.</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Slogan</label>
+                        <input type="text" name="tagline" value="{{ settings.tagline if settings else '' }}" class="m3-input" placeholder="En iyi çözümler">
                     </div>
                 </div>
-                <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
-                    <div>
-                        <label for="site_name" class="flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            <span>Site Adı</span>
-                            <span class="text-xs text-slate-400">Ziyaretçilere gösterilir</span>
-                        </label>
-                        <input
-                            type="text"
-                            id="site_name"
-                            name="site_name"
-                            value="{{ site_name_value }}"
-                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                            placeholder="Örn. BestWork"
-                        >
-                    </div>
-                    <div>
-                        <label for="site_primary_color" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Marka Rengi</label>
-                        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 px-4 py-3">
-                            <input
-                                type="color"
-                                id="site_primary_color"
-                                name="site_primary_color"
-                                value="{{ site_color_value }}"
-                                class="h-12 w-12 rounded-full border border-slate-200 dark:border-slate-700 cursor-pointer shadow-inner bg-white"
-                                title="Renk seç"
-                            >
-                            <span class="text-sm font-mono tracking-wide text-slate-600 dark:text-slate-300">{{ site_color_value }}</span>
-                        </div>
-                    </div>
-                </div>
+                
                 <div>
-                    <label for="site_description" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
-                        <span>Site Açıklaması</span>
-                        <span class="text-xs text-slate-400">Footer üzerinde yayınlanır</span>
-                    </label>
-                    <textarea
-                        id="site_description"
-                        name="site_description"
-                        rows="5"
-                        class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                    >{{ site_description_value|e }}</textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Site Açıklaması</label>
+                    <textarea name="description" rows="3" class="m3-input resize-none" placeholder="Siteniz hakkında kısa bir açıklama...">{{ settings.description if settings else '' }}</textarea>
                 </div>
-            </div>
-
-            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-200 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-xl">contact_phone</span>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Çalışma Saatleri</label>
+                        <input type="text" name="working_hours" value="{{ settings.working_hours if settings else '' }}" class="m3-input" placeholder="Pazartesi - Cuma: 09:00 - 18:00">
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">İletişim Bilgileri</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Footer bölümünde sergilenecek tüm iletişim kanallarını güncelleyin.</p>
-                    </div>
-                </div>
-                <div class="grid gap-5 lg:grid-cols-3">
-                    <div>
-                        <label for="site_contact_email" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">E-Posta</label>
-                        <input
-                            type="email"
-                            id="site_contact_email"
-                            name="site_contact_email"
-                            value="{{ site_contact_email_value|e }}"
-                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                            placeholder="info@bestwork.com"
-                        >
-                    </div>
-                    <div>
-                        <label for="site_contact_address" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Adres</label>
-                        <textarea
-                            id="site_contact_address"
-                            name="site_contact_address"
-                            rows="3"
-                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                            placeholder="İstanbul, Türkiye"
-                        >{{ site_contact_address_value|e }}</textarea>
-                    </div>
-                    <div>
-                        <label for="site_contact_phone" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Telefon</label>
-                        <input
-                            type="text"
-                            id="site_contact_phone"
-                            name="site_contact_phone"
-                            value="{{ site_contact_phone_value|e }}"
-                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                            placeholder="+90 850 222 00 00"
-                        >
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Copyright Metni</label>
+                        <input type="text" name="copyright" value="{{ settings.copyright if settings else '' }}" class="m3-input" placeholder="© 2025 BestSoft">
                     </div>
                 </div>
             </div>
-
-            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-2xl bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-200 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-xl">share</span>
+            
+            <!-- Contact Tab -->
+            <div x-show="activeTab === 'contact'" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">E-posta Adresi</label>
+                        <input type="email" name="email" value="{{ settings.email if settings else '' }}" class="m3-input" placeholder="info@bestsoft.com">
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Sosyal Medya</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Boş bırakılan platformlar sitede görüntülenmez.</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                        <input type="tel" name="phone" value="{{ settings.phone if settings else '' }}" class="m3-input" placeholder="+90 555 123 4567">
                     </div>
                 </div>
-                <div class="grid gap-5 md:grid-cols-2">
-                    {% set social_fields = [
-                        ('facebook', 'Facebook', 'https://facebook.com/bestwork'),
-                        ('instagram', 'Instagram', 'https://instagram.com/bestwork'),
-                        ('twitter', 'Twitter', 'https://twitter.com/bestwork'),
-                        ('linkedin', 'LinkedIn', 'https://linkedin.com/company/bestwork'),
-                        ('youtube', 'YouTube', 'https://youtube.com/@bestwork')
-                    ] %}
-                    {% for key, label, placeholder in social_fields %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Adres</label>
+                    <textarea name="address" rows="2" class="m3-input resize-none" placeholder="Tam adres bilgisi...">{{ settings.address if settings else '' }}</textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label for="site_social_{{ key }}" class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ label }} URL</label>
-                        <input
-                            type="url"
-                            id="site_social_{{ key }}"
-                            name="site_social_{{ key }}"
-                            value="{{ site_social_links[key]|e if site_social_links[key] != '#' else '' }}"
-                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
-                            placeholder="{{ placeholder }}"
-                        >
+                        <label class="block text-sm font-medium text-gray-700 mb-2">WhatsApp</label>
+                        <input type="text" name="whatsapp" value="{{ settings.whatsapp if settings else '' }}" class="m3-input" placeholder="+90 555 123 4567">
                     </div>
-                    {% endfor %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Google Maps Embed</label>
+                        <input type="text" name="google_maps" value="{{ settings.google_maps if settings else '' }}" class="m3-input" placeholder="Google Maps iframe URL">
+                    </div>
                 </div>
             </div>
-
-            <div class="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-6 space-y-6 shadow-sm">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-200 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-xl">image</span>
+            
+            <!-- Social Media Tab -->
+            <div x-show="activeTab === 'social'" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+                        <input type="url" name="facebook" value="{{ settings.facebook if settings else '' }}" class="m3-input" placeholder="https://facebook.com/...">
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Logo & Medya</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Ana ve footer logolarını yönetebilirsiniz. Yeni yüklemeler mevcut logoların yerini alır.</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                        <input type="url" name="instagram" value="{{ settings.instagram if settings else '' }}" class="m3-input" placeholder="https://instagram.com/...">
                     </div>
                 </div>
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div class="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/70 dark:bg-slate-900/30">
-                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base text-violet-500 dark:text-violet-300">branding_watermark</span>
-                            Ana Logo
-                        </p>
-                        <div class="flex flex-wrap items-center gap-4">
-                            <input
-                                type="file"
-                                name="primary_logo"
-                                id="primary-logo-input"
-                                accept=".png,.jpg,.jpeg,.gif,.webp"
-                                class="sr-only"
-                                data-file-input
-                                data-file-label="#primary-logo-name"
-                            >
-                            <label
-                                for="primary-logo-input"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 text-white font-semibold cursor-pointer shadow hover:bg-violet-500 transition"
-                            >
-                                <span class="material-symbols-outlined text-base">attach_file</span>
-                                <span>Dosya Seç</span>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Twitter / X</label>
+                        <input type="url" name="twitter" value="{{ settings.twitter if settings else '' }}" class="m3-input" placeholder="https://twitter.com/...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+                        <input type="url" name="linkedin" value="{{ settings.linkedin if settings else '' }}" class="m3-input" placeholder="https://linkedin.com/company/...">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                        <input type="url" name="youtube" value="{{ settings.youtube if settings else '' }}" class="m3-input" placeholder="https://youtube.com/...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">TikTok</label>
+                        <input type="url" name="tiktok" value="{{ settings.tiktok if settings else '' }}" class="m3-input" placeholder="https://tiktok.com/@...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEO Tab -->
+            <div x-show="activeTab === 'seo'" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Meta Başlık</label>
+                    <input type="text" name="meta_title" value="{{ settings.meta_title if settings else '' }}" class="m3-input" placeholder="Sayfa başlığı (60 karakter önerilir)">
+                    <p class="text-xs text-gray-400 mt-1">Arama motorlarında görünen başlık</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Meta Açıklama</label>
+                    <textarea name="meta_description" rows="3" class="m3-input resize-none" placeholder="Sayfa açıklaması (160 karakter önerilir)">{{ settings.meta_description if settings else '' }}</textarea>
+                    <p class="text-xs text-gray-400 mt-1">Arama sonuçlarında görünen açıklama</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Anahtar Kelimeler</label>
+                    <input type="text" name="keywords" value="{{ settings.keywords if settings else '' }}" class="m3-input" placeholder="kelime1, kelime2, kelime3">
+                    <p class="text-xs text-gray-400 mt-1">Virgülle ayırarak yazın</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Google Analytics ID</label>
+                    <input type="text" name="google_analytics" value="{{ settings.google_analytics if settings else '' }}" class="m3-input" placeholder="G-XXXXXXXXXX">
+                </div>
+            </div>
+            
+            <!-- Appearance Tab -->
+            <div x-show="activeTab === 'appearance'" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                        <div class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-primary-300 transition-colors">
+                            <input type="file" name="logo" accept="image/*" class="hidden" id="logo-upload">
+                            <label for="logo-upload" class="cursor-pointer">
+                                <span class="material-symbols-rounded text-3xl text-gray-400">image</span>
+                                <p class="text-sm text-gray-500 mt-2">Logo yükle</p>
                             </label>
-                            <span id="primary-logo-name" class="text-sm text-slate-500 dark:text-slate-400">Dosya seçilmedi</span>
                         </div>
-                        {% if primary_logo_url %}
-                        <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/80 flex flex-col gap-2">
-                            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Aktif Logo</span>
-                            <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3">
-                                <img src="{{ primary_logo_url }}" alt="Ana Logo" class="max-h-20 object-contain">
-                            </div>
-                        </div>
-                        {% endif %}
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Önerilen: 300x120 px, şeffaf PNG.</p>
                     </div>
-                    <div class="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/70 dark:bg-slate-900/30">
-                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base text-violet-500 dark:text-violet-300">layers</span>
-                            Footer Logosı
-                        </p>
-                        <div class="flex flex-wrap items-center gap-4">
-                            <input
-                                type="file"
-                                name="footer_logo"
-                                id="footer-logo-input"
-                                accept=".png,.jpg,.jpeg,.gif,.webp"
-                                class="sr-only"
-                                data-file-input
-                                data-file-label="#footer-logo-name"
-                            >
-                            <label
-                                for="footer-logo-input"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 text-white font-semibold cursor-pointer shadow hover:bg-violet-500 transition"
-                            >
-                                <span class="material-symbols-outlined text-base">attach_file</span>
-                                <span>Dosya Seç</span>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Favicon</label>
+                        <div class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-primary-300 transition-colors">
+                            <input type="file" name="favicon" accept="image/*" class="hidden" id="favicon-upload">
+                            <label for="favicon-upload" class="cursor-pointer">
+                                <span class="material-symbols-rounded text-3xl text-gray-400">star</span>
+                                <p class="text-sm text-gray-500 mt-2">Favicon yükle</p>
                             </label>
-                            <span id="footer-logo-name" class="text-sm text-slate-500 dark:text-slate-400">Dosya seçilmedi</span>
                         </div>
-                        {% if footer_logo_url %}
-                        <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/80 flex flex-col gap-2">
-                            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Aktif Footer Logosı</span>
-                            <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3">
-                                <img src="{{ footer_logo_url }}" alt="Footer Logosı" class="max-h-20 object-contain">
-                            </div>
-                        </div>
-                        {% endif %}
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Footer için farklı bir logo tercih edebilirsiniz.</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ana Renk</label>
+                        <input type="color" name="primary_color" value="{{ settings.primary_color if settings else '#7c3aed' }}" class="w-full h-12 rounded-xl border border-gray-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">İkincil Renk</label>
+                        <input type="color" name="secondary_color" value="{{ settings.secondary_color if settings else '#3b82f6' }}" class="w-full h-12 rounded-xl border border-gray-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Accent Renk</label>
+                        <input type="color" name="accent_color" value="{{ settings.accent_color if settings else '#f59e0b' }}" class="w-full h-12 rounded-xl border border-gray-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Metin Rengi</label>
+                        <input type="color" name="text_color" value="{{ settings.text_color if settings else '#1f2937' }}" class="w-full h-12 rounded-xl border border-gray-200 cursor-pointer">
                     </div>
                 </div>
             </div>
-
-            <div class="flex justify-end">
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-500 transition">
-                    <span class="material-symbols-outlined text-base">save</span>
-                    Bilgileri Güncelle
+            
+            <!-- Submit Button -->
+            <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button type="reset" class="m3-btn m3-btn-outlined">
+                    Sıfırla
+                </button>
+                <button type="submit" class="m3-btn m3-btn-filled">
+                    <span class="material-symbols-rounded">save</span>
+                    Kaydet
                 </button>
             </div>
         </form>
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        if (window.CKEDITOR && document.getElementById("site_description")) {
-            CKEDITOR.replace("site_description", {
-                height: 160,
-                removePlugins: "resize",
-            });
-        }
-    });
-</script>
 {% endblock %}
