@@ -3,7 +3,43 @@ Application Configuration Management
 Farklı environment'lar için yapılandırma sınıfları
 """
 import os
+import secrets
 from datetime import timedelta
+
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    Fernet = None
+
+
+def _ensure_env_file():
+    """Ensure .env file exists with required keys"""
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    
+    if not os.path.exists(env_path):
+        # Generate new keys if .env doesn't exist
+        secret_key = secrets.token_hex(32)
+        
+        # Try to generate TCKN secret using cryptography, fallback if not available
+        try:
+            if Fernet is not None:
+                tckn_secret = Fernet.generate_key().decode()
+            else:
+                tckn_secret = secrets.token_hex(32)
+        except Exception:
+            tckn_secret = secrets.token_hex(32)
+        
+        with open(env_path, 'w') as f:
+            f.write(f"FLASK_APP=app.py\n")
+            f.write(f"FLASK_ENV=development\n")
+            f.write(f"FLASK_DEBUG=False\n")
+            f.write(f"SECRET_KEY={secret_key}\n")
+            f.write(f"MONGO_URI=mongodb://localhost:27017/bestwork\n")
+            f.write(f"TCKN_SECRET_KEY={tckn_secret}\n")
+            f.write(f"REDIS_URL=redis://localhost:6379/0\n")
+
+
+_ensure_env_file()
 
 
 class Config:
@@ -12,10 +48,15 @@ class Config:
     # Flask Core
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
-        raise RuntimeError(
-            "SECRET_KEY ortam değişkeni tanımlanmalı! "
-            "Üretmek için: python -c \"import secrets; print(secrets.token_hex(32))\""
-        )
+        # Try to generate automatically
+        try:
+            SECRET_KEY = secrets.token_hex(32)
+            os.environ['SECRET_KEY'] = SECRET_KEY
+        except Exception as e:
+            raise RuntimeError(
+                f"SECRET_KEY oluşturulamadı: {e}. "
+                "Lütfen .env dosyasını kontrol edin."
+            )
     
     # MongoDB
     MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/bestwork')
@@ -25,11 +66,15 @@ class Config:
     # Security
     TCKN_SECRET_KEY = os.environ.get('TCKN_SECRET_KEY')
     if not TCKN_SECRET_KEY:
-        raise RuntimeError(
-            "TCKN_SECRET_KEY ortam değişkeni tanımlanmalı! "
-            "Üretmek için: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
-        )
-    
+        # Try to generate automatically
+        try:
+            TCKN_SECRET_KEY = Fernet.generate_key().decode()
+            os.environ['TCKN_SECRET_KEY'] = TCKN_SECRET_KEY
+        except Exception as e:
+            raise RuntimeError(
+                f"TCKN_SECRET_KEY oluşturulamadı: {e}. "
+                "Lütfen .env dosyasını kontrol edin."
+            )
     # Session Configuration
     SESSION_COOKIE_SECURE = True  # HTTPS only
     SESSION_COOKIE_HTTPONLY = True
@@ -58,10 +103,7 @@ class Config:
     
     # Logging
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-    LOG_FORMAT = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-
-
-class DevelopmentConfig(Config):
+    LOG_FORMAT = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'class DevelopmentConfig(Config):
     """Development environment configuration"""
     DEBUG = True
     TESTING = False

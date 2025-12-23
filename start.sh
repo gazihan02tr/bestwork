@@ -1,138 +1,190 @@
 #!/bin/bash
 
 # BestWork Application Startup Script
-# This script checks requirements and starts the application safely
+# Works on macOS, Linux
+# Tüm kontrolleri yapıp uygulamayı güvenli şekilde başlatır
 
-echo "🚀 BestWork Application Başlatılıyor..."
-echo ""
+set -e
 
-# Colors
+# Script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Functions
+print_header() {
+    echo -e "\n${BLUE}╔════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC} $1"
+    echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}\n"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+# Main startup process
+print_header "🚀 BestWork Application Starting"
+
 # Check Python
-echo "📌 Python kontrolü..."
+print_info "Checking Python..."
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}❌ Python3 bulunamadı!${NC}"
+    print_error "Python3 not found!"
+    echo "Please install Python 3.8+ and try again"
     exit 1
 fi
-echo -e "${GREEN}✓ Python3 bulundu${NC}"
 
-# Check MongoDB
-echo "📌 MongoDB kontrolü..."
-if ! pgrep -x mongod > /dev/null; then
-    echo -e "${YELLOW}⚠️  MongoDB çalışmıyor!${NC}"
-    echo "MongoDB'yi başlatmak için:"
-    echo "  macOS: brew services start mongodb-community"
-    echo "  Linux: sudo systemctl start mongod"
-    read -p "Devam etmek istiyor musunuz? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-else
-    echo -e "${GREEN}✓ MongoDB çalışıyor${NC}"
-fi
-
-# Check .env file
-echo "📌 Environment dosyası kontrolü..."
-if [ ! -f .env ]; then
-    echo -e "${RED}❌ .env dosyası bulunamadı!${NC}"
-    echo "Lütfen .env.example dosyasını .env olarak kopyalayın:"
-    echo "  cp .env.example .env"
-    echo "Ve gerekli ayarları yapın."
-    exit 1
-fi
-echo -e "${GREEN}✓ .env dosyası bulundu${NC}"
-
-# Check SECRET_KEY
-echo "📌 SECRET_KEY kontrolü..."
-if ! grep -q "SECRET_KEY=.\+" .env; then
-    echo -e "${RED}❌ SECRET_KEY tanımlı değil!${NC}"
-    echo "Yeni bir SECRET_KEY oluşturmak için:"
-    echo "  python3 -c \"import secrets; print('SECRET_KEY=' + secrets.token_hex(32))\""
-    exit 1
-fi
-echo -e "${GREEN}✓ SECRET_KEY tanımlı${NC}"
-
-# Check TCKN_SECRET_KEY
-echo "📌 TCKN_SECRET_KEY kontrolü..."
-if ! grep -q "TCKN_SECRET_KEY=.\+" .env; then
-    echo -e "${RED}❌ TCKN_SECRET_KEY tanımlı değil!${NC}"
-    echo "Yeni bir TCKN_SECRET_KEY oluşturmak için:"
-    echo "  python3 -c \"from cryptography.fernet import Fernet; print('TCKN_SECRET_KEY=' + Fernet.generate_key().decode())\""
-    exit 1
-fi
-echo -e "${GREEN}✓ TCKN_SECRET_KEY tanımlı${NC}"
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+print_success "Python $PYTHON_VERSION found"
 
 # Check virtual environment
-echo "📌 Virtual environment kontrolü..."
 if [ ! -d ".venv" ]; then
-    echo -e "${YELLOW}⚠️  Virtual environment bulunamadı!${NC}"
-    echo "Oluşturuluyor..."
+    print_warning "Virtual environment not found"
+    print_info "Creating virtual environment..."
     python3 -m venv .venv
-    echo -e "${GREEN}✓ Virtual environment oluşturuldu${NC}"
+    print_success "Virtual environment created"
 fi
 
 # Activate virtual environment
-echo "📌 Virtual environment aktifleştiriliyor..."
+print_info "Activating virtual environment..."
 source .venv/bin/activate
 
 # Check dependencies
-echo "📌 Dependencies kontrolü..."
-if ! python -c "import flask" &> /dev/null; then
-    echo -e "${YELLOW}⚠️  Dependencies eksik!${NC}"
-    echo "Kuruluyor..."
+print_info "Checking dependencies..."
+if ! python -c "import flask" 2>/dev/null; then
+    print_warning "Dependencies not found"
+    print_info "Installing dependencies..."
     pip install -q -r requirements.txt
-    echo -e "${GREEN}✓ Dependencies kuruldu${NC}"
+    print_success "Dependencies installed"
 else
-    echo -e "${GREEN}✓ Dependencies mevcut${NC}"
+    print_success "All dependencies available"
 fi
 
-# Check Redis (optional)
-echo "📌 Redis kontrolü (opsiyonel)..."
-if ! pgrep -x redis-server > /dev/null; then
-    echo -e "${YELLOW}⚠️  Redis çalışmıyor (cache devre dışı)${NC}"
-    echo "Redis'i başlatmak için:"
-    echo "  macOS: brew services start redis"
-    echo "  Linux: sudo systemctl start redis"
+# Check .env file
+print_info "Checking configuration..."
+if [ ! -f ".env" ]; then
+    print_error ".env file not found!"
+    print_info "Creating .env file with auto-generated keys..."
+    
+    # Generate keys and create .env
+    SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+    TCKN_SECRET=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    
+    cat > .env << EOF
+# Flask Configuration
+FLASK_APP=app.py
+FLASK_ENV=development
+FLASK_DEBUG=False
+
+# Security Keys (Auto-generated)
+SECRET_KEY=$SECRET_KEY
+
+# MongoDB Connection
+MONGO_URI=mongodb://localhost:27017/bestwork
+
+# TCKN Encryption Key (Auto-generated)
+TCKN_SECRET_KEY=$TCKN_SECRET
+
+# Cache & Rate Limiting
+REDIS_URL=redis://localhost:6379/0
+RATELIMIT_STORAGE_URL=redis://localhost:6379/1
+
+# Demo User
+DEMO_USER_ID=000954
+DEMO_USER_PASS=12345
+
+# Logging
+LOG_LEVEL=INFO
+EOF
+    
+    chmod 600 .env
+    print_success ".env file created"
 else
-    echo -e "${GREEN}✓ Redis çalışıyor${NC}"
+    print_success ".env file found"
+    
+    # Check if SECRET_KEY is set
+    if ! grep -q "^SECRET_KEY=[^ ]" .env; then
+        print_error "SECRET_KEY not properly configured!"
+        exit 1
+    fi
+    
+    # Check if TCKN_SECRET_KEY is set
+    if ! grep -q "^TCKN_SECRET_KEY=[^ ]" .env; then
+        print_error "TCKN_SECRET_KEY not properly configured!"
+        exit 1
+    fi
 fi
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${GREEN}✨ Tüm kontroller başarılı!${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+# Create necessary directories
+mkdir -p static/uploads
+mkdir -p logs
 
-# Check environment mode
-FLASK_ENV=$(grep "^FLASK_ENV=" .env | cut -d'=' -f2)
-FLASK_DEBUG=$(grep "^FLASK_DEBUG=" .env | cut -d'=' -f2)
+# Check MongoDB
+print_info "Checking MongoDB..."
+if pgrep -x "mongod" > /dev/null; then
+    print_success "MongoDB is running"
+else
+    print_warning "MongoDB is not running"
+    echo "  Start MongoDB:"
+    echo "    macOS:  brew services start mongodb-community"
+    echo "    Linux:  sudo systemctl start mongod"
+    echo "    Docker: docker run -d -p 27017:27017 mongo"
+fi
+
+# Check Redis
+print_info "Checking Redis..."
+if pgrep -x "redis-server" > /dev/null || command -v redis-cli &> /dev/null && redis-cli ping &> /dev/null; then
+    print_success "Redis is running"
+else
+    print_warning "Redis is not running (caching disabled)"
+    echo "  Start Redis:"
+    echo "    macOS:  brew services start redis"
+    echo "    Linux:  sudo systemctl start redis"
+    echo "    Docker: docker run -d -p 6379:6379 redis"
+fi
+
+# Get Flask environment
+FLASK_ENV=$(grep "^FLASK_ENV=" .env | cut -d'=' -f2 | tr -d ' ')
+FLASK_DEBUG=$(grep "^FLASK_DEBUG=" .env | cut -d'=' -f2 | tr -d ' ')
 
 if [ "$FLASK_ENV" = "production" ]; then
-    echo -e "${GREEN}🔐 Production mode${NC}"
+    print_warning "Running in PRODUCTION mode"
     if [ "$FLASK_DEBUG" = "True" ] || [ "$FLASK_DEBUG" = "true" ]; then
-        echo -e "${RED}⚠️  WARNING: DEBUG is enabled in production!${NC}"
-        read -p "Debug modunu kapatmak istiyor musunuz? (y/n) " -n 1 -r
+        print_error "WARNING: DEBUG is enabled in production!"
+        read -p "Disable DEBUG mode? (y/n) " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            sed -i '' 's/FLASK_DEBUG=True/FLASK_DEBUG=False/' .env
-            sed -i '' 's/FLASK_DEBUG=true/FLASK_DEBUG=False/' .env
-            echo -e "${GREEN}✓ DEBUG kapatıldı${NC}"
+            sed -i '' 's/FLASK_DEBUG=True/FLASK_DEBUG=False/' .env 2>/dev/null || sed -i 's/FLASK_DEBUG=True/FLASK_DEBUG=False/' .env
+            print_success "DEBUG disabled"
         fi
     fi
 else
-    echo -e "${YELLOW}🔧 Development mode${NC}"
+    print_info "Running in DEVELOPMENT mode"
 fi
 
-echo ""
-echo "🌐 Uygulama başlatılıyor..."
-echo "   URL: http://127.0.0.1:5000"
-echo "   Durdurmak için: Ctrl+C"
+# Print startup info
+print_header "🎯 Application Ready"
+
+echo "URL:           http://127.0.0.1:5000"
+echo "Stop:          Press Ctrl+C"
 echo ""
 
-# Start the application
-python app.py
+# Run the application
+exec python app.py

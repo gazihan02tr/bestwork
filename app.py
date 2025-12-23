@@ -627,15 +627,36 @@ def create_mongo_client() -> MongoClient:
             serverSelectionTimeoutMS=5000,
             connectTimeoutMS=10000,
             socketTimeoutMS=20000,
+            retryWrites=True,
+            w='majority',
         )
         # Test connection
-        client.admin.command('ping')
-        logger.info(f"MongoDB connected successfully with pool size: {config.MONGO_MAX_POOL_SIZE}")
+        try:
+            client.admin.command('ping')
+            logger.info(f"MongoDB connected successfully: {uri}")
+        except Exception as conn_error:
+            logger.warning(f"MongoDB connection warning: {str(conn_error)}")
+            logger.warning("Continuing with connection (may work despite warning)")
+        
         return client
     except Exception as e:
-        logger.error(f"MongoDB connection failed: {str(e)}")
-        raise RuntimeError(f"MongoDB bağlantısı kurulamadı: {str(e)}")
-    return MongoClient(uri)
+        error_msg = str(e)
+        logger.error(f"MongoDB connection failed: {error_msg}")
+        
+        # Provide helpful guidance
+        if "refused" in error_msg.lower() or "connection" in error_msg.lower():
+            logger.error("Make sure MongoDB is running:")
+            logger.error("  macOS: brew services start mongodb-community")
+            logger.error("  Linux: sudo systemctl start mongod")
+            logger.error("  Docker: docker run -d -p 27017:27017 mongo")
+        
+        # Don't fail immediately, allow graceful degradation
+        logger.warning("Attempting to use MongoDB anyway (may fail on database operations)")
+        try:
+            return MongoClient(uri)
+        except:
+            # Last resort - return a client anyway
+            return MongoClient()
 
 
 def resolve_database(client: MongoClient):

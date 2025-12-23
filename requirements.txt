@@ -1,4 +1,5 @@
-Flask==3.0.0
+# Core Dependencies
+Flask==3.0.3
 pymongo==4.6.1
 Werkzeug==3.0.1
 cryptography==41.0.7
@@ -7,9 +8,23 @@ Pillow==10.4.0
 
 # Security & Performance
 Flask-WTF==1.2.1
-Flask-Limiter==3.5.0
+Flask-Limiter==3.7.0
 Flask-Caching==2.1.0
-marshmallow==3.20.1
+marshmallow==3.20.2
 
-# Optional but recommended
+# Database & Cache
 redis==5.0.1
+python-dateutil==2.8.2
+
+# Utilities
+requests==2.31.0
+click==8.1.7
+
+# Production Server (Optional but recommended)
+gunicorn==21.2.0
+gevent==23.9.1
+gevent-websocket==0.10.1
+
+# Windows compatibility
+pywin32==306; sys_platform == 'win32'
+
